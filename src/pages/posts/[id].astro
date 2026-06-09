@@ -46,7 +46,7 @@ const htmlContent = renderMarkdown(post.content);
 <BaseLayout
   seo={{
     title: post.title,
-    description: post.excerpt || undefined,
+    description: post.excerpt || post.title,
     type: 'article',
     publishedAt: toISODateTime(post.createdAt),
     image: post.coverImage || undefined,
@@ -100,23 +100,38 @@ const htmlContent = renderMarkdown(post.content);
 
   <CommentSection />
 
-  <button id="back-to-top" class="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[var(--color-accent)] text-white shadow-lg opacity-0 translate-y-4 pointer-events-none transition-all duration-300 hover:bg-[var(--color-accent-hover)]" aria-label="回到顶部">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-  </button>
+  <!-- 悬浮按钮组 -->
+  <div id="floating-btns" class="fixed bottom-6 right-6 z-40 flex flex-col gap-2 opacity-0 translate-y-4 pointer-events-none transition-all duration-300">
+    <button id="go-to-bottom" class="p-3 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] shadow-lg hover:text-[var(--color-accent)] hover:border-[var(--color-accent)]" aria-label="直达评论区" title="直达评论区">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+    </button>
+    <button id="back-to-top" class="p-3 rounded-full bg-[var(--color-accent)] text-white shadow-lg hover:bg-[var(--color-accent-hover)]" aria-label="回到顶部" title="回到顶部">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+    </button>
+  </div>
 
   <script>
-    const btn = document.getElementById('back-to-top');
-    if (btn) {
+    const floatingBtns = document.getElementById('floating-btns');
+    const goBottom = document.getElementById('go-to-bottom');
+    const backToTop = document.getElementById('back-to-top');
+
+    if (floatingBtns) {
       window.addEventListener('scroll', () => {
         if (window.scrollY > 400) {
-          btn.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
-          btn.classList.add('opacity-100', 'translate-y-0');
+          floatingBtns.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
+          floatingBtns.classList.add('opacity-100', 'translate-y-0');
         } else {
-          btn.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
-          btn.classList.remove('opacity-100', 'translate-y-0');
+          floatingBtns.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
+          floatingBtns.classList.remove('opacity-100', 'translate-y-0');
         }
       });
-      btn.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
+      goBottom?.addEventListener('click', () => {
+  const comments = document.querySelector('.giscus') || document.querySelector('#comments-anchor');
+  if (comments) {
+    comments.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+      backToTop?.addEventListener('click', () => window.scrollTo({top: 0, behavior: 'smooth'}));
     }
   </script>
 </BaseLayout>
