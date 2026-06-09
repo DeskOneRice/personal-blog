@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "db:setup": "prisma db push && prisma generate && tsx prisma/seed.ts"
+    "db:setup": "prisma db push && prisma generate && tsx prisma/seed.ts",
+    "import:md": "tsx prisma/import-md.ts"
   },
   "dependencies": {
     "@astrojs/node": "^9.2.0",
