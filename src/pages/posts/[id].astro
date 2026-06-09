@@ -1,21 +1,21 @@
 ---
 /**
- * [id]/[slug].astro — 文章详情页
+ * [id].astro — 文章详情页
  *
- * URL: /posts/123/hello-world
- * 以 ID 为唯一标识查找文章，slug 仅用于 SEO。
- * 如果 slug 不匹配，自动 301 重定向到正确地址。
+ * URL: /posts/123
+ * 纯 ID 路由，无 slug。
  */
-import BaseLayout from '../../../components/layout/BaseLayout.astro';
-import TagBadge from '../../../components/blog/TagBadge.astro';
-import CommentSection from '../../../components/common/CommentSection.astro';
-import { prisma } from '../../../lib/prisma';
-import { renderMarkdown } from '../../../lib/markdown';
-import { formatDateTime, toISODateTime } from '../../../lib/utils';
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import TagBadge from '../../components/blog/TagBadge.astro';
+import CommentSection from '../../components/common/CommentSection.astro';
+import { prisma } from '../../lib/prisma';
+import { renderMarkdown } from '../../lib/markdown';
+import { formatDateTime, toISODateTime } from '../../lib/utils';
+import { decodeSession, hasRole } from '../../lib/auth';
 
-const { id, slug } = Astro.params;
-
+const { id } = Astro.params;
 const postId = parseInt(id!);
+
 if (isNaN(postId)) {
   return Astro.redirect('/');
 }
@@ -28,13 +28,12 @@ const post = await prisma.post.findUnique({
   },
 });
 
-if (!post || !post.published) {
-  return Astro.redirect('/');
-}
+// 管理员可预览草稿
+const session = decodeSession(Astro.cookies.get('session')?.value);
+const isAdmin = session && hasRole(session.role, 'admin');
 
-// slug 不匹配 → 301 重定向到正确 URL
-if (post.slug !== slug) {
-  return Astro.redirect(`/posts/${post.id}/${post.slug}`, 301);
+if (!post || (!post.published && !isAdmin)) {
+  return Astro.redirect('/');
 }
 
 const isUpdated = post.updatedAt.getTime() - post.createdAt.getTime() > 1000;
@@ -51,11 +50,18 @@ const htmlContent = renderMarkdown(post.content);
     type: 'article',
     publishedAt: toISODateTime(post.createdAt),
     image: post.coverImage || undefined,
-    canonicalURL: new URL(`/posts/${post.id}/${post.slug}`, Astro.url).href,
+    canonicalURL: new URL(`/posts/${post.id}`, Astro.url).href,
   }}
 >
+  <!-- 草稿提示 -->
+  {!post.published && (
+    <div class="mb-4 px-4 py-2 rounded-md bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-sm flex items-center gap-2">
+      <span>📝</span> 这是一篇草稿，仅管理员可见
+      <a href={`/admin/posts/${post.id}/edit`} class="ml-auto text-[var(--color-accent)] hover:underline">编辑</a>
+    </div>
+  )}
+
   <article>
-    <!-- 返回首页 -->
     <a href="/" class="inline-flex items-center gap-1 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-accent)] transition-colors mb-4">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
       返回首页
@@ -66,7 +72,6 @@ const htmlContent = renderMarkdown(post.content);
         {post.title}
       </h1>
 
-      <!-- 日期 + 分类 + 标签(同行) -->
       <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--color-text-muted)]">
         <time datetime={toISODateTime(displayTime)}>
           {timeLabel} {formatDateTime(displayTime)}
@@ -91,12 +96,10 @@ const htmlContent = renderMarkdown(post.content);
     </header>
 
     <div class="prose" set:html={htmlContent} />
-
   </article>
 
   <CommentSection />
 
-  <!-- 悬浮回到顶部按钮 (滚动一定距离后出现) -->
   <button id="back-to-top" class="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-[var(--color-accent)] text-white shadow-lg opacity-0 translate-y-4 pointer-events-none transition-all duration-300 hover:bg-[var(--color-accent-hover)]" aria-label="回到顶部">
     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
   </button>

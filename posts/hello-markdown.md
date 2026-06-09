@@ -21,8 +21,6 @@ excerpt: 演示如何通过 Markdown 文件快速发布博客文章。
 - `published` — true/false
 - `coverImage` — 封面图 URL
 - `excerpt` — 摘要
-- `slug` — URL 标识（可选，默认取文件名）
-
 ### 正文
 
 用标准 Markdown 语法写，支持代码块、表格、列表等。

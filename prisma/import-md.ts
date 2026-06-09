@@ -97,7 +97,6 @@ async function main() {
     const raw = readFileSync(filePath, 'utf-8');
     const { meta, content } = parseFrontmatter(raw);
 
-    const slug = meta.slug || file.replace(/\.md$/, '');
     const title = meta.title || file.replace(/\.md$/, '');
 
     if (!content.trim()) {
@@ -106,10 +105,10 @@ async function main() {
       continue;
     }
 
-    // 检查 slug 是否已存在
-    const existing = await prisma.post.findUnique({ where: { slug } });
+    // 检查标题是否已存在
+    const existing = await prisma.post.findFirst({ where: { title } });
     if (existing) {
-      console.log(`  ⏭ ${file}: slug "${slug}" 已存在，跳过 (可删除 posts/ 目录下的文件后重试)`);
+      console.log(`  ⏭ ${file}: 标题 "${title}" 已存在，跳过`);
       skipped++;
       continue;
     }
@@ -140,7 +139,6 @@ async function main() {
     await prisma.post.create({
       data: {
         title,
-        slug,
         content,
         excerpt: meta.excerpt || null,
         coverImage: meta.coverImage || null,

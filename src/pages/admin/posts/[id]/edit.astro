@@ -32,12 +32,6 @@ const postId = Astro.params.id;
         class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
     </div>
 
-    <div>
-      <label for="slug" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">Slug *</label>
-      <input id="slug" type="text" required
-        class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
-    </div>
-
     <div class="grid gap-5 sm:grid-cols-2">
       <div>
         <label for="category" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">分类</label>
@@ -105,7 +99,7 @@ const postId = Astro.params.id;
 
         // 填充表单
         (document.getElementById('title') as HTMLInputElement).value = post.title || '';
-        (document.getElementById('slug') as HTMLInputElement).value = post.slug || '';
+        // slug 已移除，不再从编辑页修改
         (document.getElementById('coverImage') as HTMLInputElement).value = post.coverImage || '';
         (document.getElementById('excerpt') as HTMLTextAreaElement).value = post.excerpt || '';
         (document.getElementById('content') as HTMLTextAreaElement).value = post.content || '';
@@ -143,7 +137,6 @@ const postId = Astro.params.id;
 
       const body = {
         title: (document.getElementById('title') as HTMLInputElement).value,
-        slug: (document.getElementById('slug') as HTMLInputElement).value,
         content: (document.getElementById('content') as HTMLTextAreaElement).value,
         coverImage: (document.getElementById('coverImage') as HTMLInputElement).value.trim() || null,
         excerpt: (document.getElementById('excerpt') as HTMLTextAreaElement).value || null,

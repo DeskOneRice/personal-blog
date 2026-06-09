@@ -31,28 +31,19 @@ export const GET: APIRoute = async ({ url }) => {
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { title, slug, content, excerpt, coverImage, published, categoryId, tagIds } = body;
+    const { title, content, excerpt, coverImage, published, categoryId, tagIds } = body;
 
-    if (!title || !slug || !content) {
-      return new Response(JSON.stringify({ error: '标题、slug 和内容不能为空' }), {
+    if (!title || !content) {
+      return new Response(JSON.stringify({ error: '标题和内容不能为空' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
     }
 
-    // 检查 slug 唯一性
-    const existing = await prisma.post.findUnique({ where: { slug } });
-    if (existing) {
-      return new Response(JSON.stringify({ error: `slug "${slug}" 已存在` }), {
-        status: 409,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
 
     const post = await prisma.post.create({
       data: {
         title,
-        slug,
         content,
         excerpt: excerpt || null,
         coverImage: coverImage || null,

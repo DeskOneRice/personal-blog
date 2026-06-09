@@ -46,7 +46,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
     }
 
     const body = await request.json();
-    const { title, slug, content, excerpt, coverImage, published, categoryId, tagIds } = body;
+    const { title, content, excerpt, coverImage, published, categoryId, tagIds } = body;
 
     // 检查文章存在
     const existing = await prisma.post.findUnique({ where: { id } });
@@ -55,17 +55,6 @@ export const PUT: APIRoute = async ({ params, request }) => {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
-    }
-
-    // 检查 slug 唯一性（排除自身）
-    if (slug && slug !== existing.slug) {
-      const slugConflict = await prisma.post.findUnique({ where: { slug } });
-      if (slugConflict) {
-        return new Response(JSON.stringify({ error: `slug "${slug}" 已存在` }), {
-          status: 409,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
     }
 
     // 先清除旧的标签关联，再创建新的
@@ -77,7 +66,6 @@ export const PUT: APIRoute = async ({ params, request }) => {
       where: { id },
       data: {
         title: title ?? existing.title,
-        slug: slug ?? existing.slug,
         content: content ?? existing.content,
         excerpt: excerpt !== undefined ? (excerpt || null) : existing.excerpt,
         coverImage: coverImage !== undefined ? (coverImage || null) : existing.coverImage,

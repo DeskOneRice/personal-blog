@@ -11,7 +11,7 @@ const user = Astro.locals.user as SessionUser | undefined;
 
 const [columns, publishedPosts] = await Promise.all([
   prisma.column.findMany({
-    include: { posts: { include: { post: { select: { id: true, title: true, slug: true } } }, orderBy: { sortOrder: 'asc' } } },
+    include: { posts: { include: { post: { select: { id: true, title: true } } }, orderBy: { sortOrder: 'asc' } } },
     orderBy: { createdAt: 'desc' },
   }),
   prisma.post.findMany({ where: { published: true }, select: { id: true, title: true }, orderBy: { createdAt: 'desc' } }),
@@ -54,7 +54,7 @@ const [columns, publishedPosts] = await Promise.all([
               draggable="true" data-post-id={cp.post.id} data-col-id={col.id}>
               <span class="drag-handle text-[var(--color-text-muted)] text-xs select-none">⠿</span>
               <span class="post-index text-[var(--color-text-muted)] text-xs">{cp.sortOrder + 1}.</span>
-              <a href={`/posts/${cp.post.id}/${cp.post.slug}`} class="flex-1 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] truncate">{cp.post.title}</a>
+              <a href={`/posts/${cp.post.id}`} class="flex-1 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] truncate">{cp.post.title}</a>
               <button class="text-xs text-red-400 hover:text-red-500 remove-post-btn" data-post-id={cp.post.id} data-col-id={col.id}>×</button>
             </div>
           ))}

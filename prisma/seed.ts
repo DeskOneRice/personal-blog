@@ -66,7 +66,6 @@ async function main() {
   const posts = [
     {
       title: '从 PyTorch 到 Web 开发：我的跨界学习之路',
-      slug: 'from-pytorch-to-web-dev',
       content: `## 为什么从 CV 转向 Web？
 
 作为一名计算机视觉方向的开发者，我最近决定学习 Web 开发。这个决定看起来有些跳跃，但其实有很多相通之处。
@@ -109,7 +108,6 @@ model Post {
     },
     {
       title: '搭建个人博客的技术选型指南',
-      slug: 'blog-tech-stack-guide',
       content: `## 选择技术栈的考量
 
 搭建个人博客时，技术栈的选择至关重要。分享一下我的决策过程。
@@ -140,7 +138,6 @@ model Post {
     },
     {
       title: '我的日常开发工作流',
-      slug: 'my-daily-dev-workflow',
       content: `## 工具与习惯
 
 记录一下我目前的开发环境和一些提高效率的工具。
@@ -185,12 +182,11 @@ model Post {
     );
 
     // 检查文章是否已存在
-    const existing = await prisma.post.findUnique({ where: { slug: postData.slug } });
+    const existing = await prisma.post.findFirst({ where: { title: postData.title } });
     if (!existing) {
       await prisma.post.create({
         data: {
           title: postData.title,
-          slug: postData.slug,
           content: postData.content,
           excerpt: postData.excerpt,
           coverImage: postData.coverImage,
@@ -249,13 +245,14 @@ model Post {
     { key: 'aboutLocation', value: '地球' },
     { key: 'aboutGithub', value: 'https://github.com/DeskOneRice' },
     { key: 'aboutEmail', value: '' },
+    { key: 'aboutEducation', value: 'XX大学 · 计算机科学' },
   ];
   for (const cfg of configs) {
-    await prisma.siteConfig.upsert({
-      where: { key: cfg.key },
-      update: { value: cfg.value },
-      create: cfg,
-    });
+    // 只新增不存在的配置，已有配置保留用户修改
+    const exists = await prisma.siteConfig.findUnique({ where: { key: cfg.key } });
+    if (!exists) {
+      await prisma.siteConfig.create({ data: cfg });
+    }
   }
   console.log(`  ✓ Site configs: ${configs.map(c => c.key).join(', ')}`);
 

@@ -9,7 +9,6 @@ import TagBadge from './TagBadge.astro';
 
 export interface PostSummary {
   id: number;
-  slug: string;
   title: string;
   excerpt?: string | null;
   coverImage?: string | null;
@@ -30,7 +29,7 @@ const { post } = Astro.props;
   <div class={`flex ${post.coverImage ? 'flex-col sm:flex-row' : 'flex-col'} p-0`}>
     <!-- 配图 -->
     {post.coverImage && (
-      <a href={`/posts/${post.id}/${post.slug}`} class="sm:w-56 flex-shrink-0 aspect-[16/9] overflow-hidden">
+      <a href={`/posts/${post.id}`} target="_blank" class="sm:w-56 flex-shrink-0 aspect-[16/9] overflow-hidden">
         <img
           src={post.coverImage}
           alt={post.title}
@@ -44,7 +43,8 @@ const { post } = Astro.props;
     <div class="flex-1 p-5">
       <h2 class="mb-2">
         <a
-          href={`/posts/${post.id}/${post.slug}`}
+          href={`/posts/${post.id}`}
+          target="_blank"
           class="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
         >
           {post.title}
@@ -81,7 +81,8 @@ const { post } = Astro.props;
       )}
 
       <a
-        href={`/posts/${post.id}/${post.slug}`}
+        href={`/posts/${post.id}`}
+        target="_blank"
         class="inline-block mt-3 text-sm font-medium text-[var(--color-accent)] hover:underline"
       >
         阅读更多 →

@@ -19,7 +19,6 @@ export const GET: APIRoute = async () => {
 
   const results = posts.map((post) => ({
     id: post.id,
-    slug: post.slug,
     title: post.title,
     excerpt: post.excerpt || extractExcerpt(post.content, 200),
     category: post.category?.name || '',

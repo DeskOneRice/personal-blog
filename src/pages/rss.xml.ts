@@ -23,8 +23,8 @@ export const GET: APIRoute = async () => {
     .map(
       (post) => `    <item>
       <title><![CDATA[${post.title}]]></title>
-      <link>${siteUrl}/posts/${post.id}/${post.slug}</link>
-      <guid isPermaLink="true">${siteUrl}/posts/${post.id}/${post.slug}</guid>
+      <link>${siteUrl}/posts/${post.id}</link>
+      <guid isPermaLink="true">${siteUrl}/posts/${post.id}</guid>
       <description><![CDATA[${post.excerpt || ''}]]></description>
       <content:encoded><![CDATA[${renderMarkdown(post.content)}]]></content:encoded>
       <pubDate>${new Date(post.createdAt).toUTCString()}</pubDate>
