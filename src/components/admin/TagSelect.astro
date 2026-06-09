@@ -1,0 +1,122 @@
+---
+/**
+ * TagSelect.astro — 搜索式标签多选
+ *
+ * 替换原来的 checkbox 列表。
+ * 点击输入框展开下拉，输入关键词筛选，勾选标签。
+ * 已选标签显示为 badge，可点击 x 移除。
+ */
+export interface Props {
+  tags: { id: number; name: string }[];
+  selectedIds?: number[];  // 初始选中的标签 ID
+}
+
+const { tags, selectedIds = [] } = Astro.props;
+---
+<div class="tag-select relative" data-selected={JSON.stringify(selectedIds)}>
+  <!-- 已选标签 + 搜索框 -->
+  <div class="flex flex-wrap items-center gap-1.5 p-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] cursor-text min-h-[38px]" id="tag-box">
+    <input
+      id="tag-search"
+      type="text"
+      class="flex-1 min-w-[80px] text-sm bg-transparent text-[var(--color-text-primary)] focus:outline-none"
+      placeholder="搜索标签..."
+      autocomplete="off"
+    />
+  </div>
+
+  <!-- 下拉列表 -->
+  <div id="tag-dropdown" class="absolute top-full left-0 right-0 z-20 mt-1 hidden bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-lg max-h-48 overflow-y-auto">
+    {tags.length === 0 ? (
+      <div class="px-3 py-4 text-sm text-[var(--color-text-muted)] text-center">暂无标签</div>
+    ) : (
+      tags.map(tag => (
+        <label class={`flex items-center gap-2 px-3 py-2 hover:bg-[var(--color-bg-secondary)] cursor-pointer ${selectedIds.includes(tag.id) ? 'bg-[var(--color-accent)]/5' : ''}`} data-tag-id={tag.id}>
+          <input type="checkbox" class="tag-cb rounded" value={tag.id} checked={selectedIds.includes(tag.id)} />
+          <span class="text-sm text-[var(--color-text-primary)]">{tag.name}</span>
+        </label>
+      ))
+    )}
+  </div>
+
+  <!-- 隐藏的 name="tags" 输入框，form 提交时用 -->
+  {tags.map(tag => (
+    <input type="checkbox" name="tags" value={tag.id} class="hidden tag-hidden" checked={selectedIds.includes(tag.id)} />
+  ))}
+</div>
+
+<script>
+  document.querySelectorAll('.tag-select').forEach(container => {
+    const box = container.querySelector('#tag-box') as HTMLElement;
+    const search = container.querySelector('#tag-search') as HTMLInputElement;
+    const dropdown = container.querySelector('#tag-dropdown') as HTMLElement;
+    const labels = container.querySelectorAll<HTMLLabelElement>('label[data-tag-id]');
+    const hiddenInputs = container.querySelectorAll<HTMLInputElement>('.tag-hidden');
+
+    // 点击搜索框展开
+    search.addEventListener('focus', () => dropdown.classList.remove('hidden'));
+    search.addEventListener('input', () => {
+      const q = search.value.toLowerCase();
+      labels.forEach(l => {
+        l.style.display = l.textContent!.toLowerCase().includes(q) ? '' : 'none';
+      });
+    });
+
+    // 选标签逻辑
+    labels.forEach(label => {
+      const cb = label.querySelector<HTMLInputElement>('.tag-cb')!;
+      cb.addEventListener('change', () => {
+        const tagId = parseInt(label.dataset.tagId!);
+        hiddenInputs.forEach(h => { if (parseInt(h.value) === tagId) h.checked = cb.checked; });
+        search.value = '';
+        labels.forEach(l => l.style.display = '');
+        renderBadges();
+      });
+    });
+
+    // 反向同步：隐藏 input 被外部修改时 → 更新可见 checkbox
+    hiddenInputs.forEach(hi => {
+      hi.addEventListener('change', () => {
+        const tagId = parseInt(hi.value);
+        const label = container.querySelector(`label[data-tag-id="${tagId}"]`);
+        if (label) {
+          const cb = label.querySelector<HTMLInputElement>('.tag-cb')!;
+          cb.checked = hi.checked;
+          label.classList.toggle('bg-[var(--color-accent)]/5', hi.checked);
+        }
+        renderBadges();
+      });
+    });
+
+    // 点击外部关闭
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target as Node)) dropdown.classList.add('hidden');
+    });
+
+    // 初始 badge 状态
+    const initialSelected = JSON.parse(container.dataset.selected || '[]') as number[];
+    function renderBadges() {
+      // 移除旧 badge
+      box.querySelectorAll('.tag-badge').forEach(b => b.remove());
+
+      const checked = Array.from(container.querySelectorAll<HTMLInputElement>('.tag-cb:checked'));
+      checked.forEach(cb => {
+        const label = cb.closest('label')!;
+        const name = label.querySelector('span')!.textContent;
+        const tagId = parseInt(label.dataset.tagId!);
+        const badge = document.createElement('span');
+        badge.className = 'tag-badge inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-[var(--color-accent)]/10 text-[var(--color-accent)]';
+        badge.innerHTML = `${name} <button type="button" class="hover:text-red-500" data-remove="${tagId}">&times;</button>`;
+        box.insertBefore(badge, search);
+        badge.querySelector('button')!.addEventListener('click', (e) => {
+          e.stopPropagation();
+          cb.checked = false;
+          hiddenInputs.forEach(h => { if (parseInt(h.value) === tagId) h.checked = false; });
+          cb.dispatchEvent(new Event('change'));
+        });
+      });
+
+    }
+    renderBadges();
+  });
+</script>

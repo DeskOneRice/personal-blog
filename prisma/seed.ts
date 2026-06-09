@@ -100,7 +100,7 @@ model Post {
 
 > 学习新技术最好的方法就是做一个实际项目。这个博客就是我的实践作品。
 `,
-      coverImage: 'https://picsum.photos/seed/pytorch/800/400',
+      coverImage: 'https://picsum.photos/seed/pytorch/800/450',
       excerpt: '从深度学习转向 Web 开发的心路历程，以及为什么选择 Astro 框架。',
       published: true,
       authorId: admin.id,
@@ -131,7 +131,7 @@ model Post {
 
 > 最好的技术栈是你能驾驭的那个。
 `,
-      coverImage: 'https://picsum.photos/seed/tech/800/400',
+      coverImage: 'https://picsum.photos/seed/tech/800/450',
       excerpt: '详细介绍个人博客的技术选型思路：Astro + SQLite + Prisma + Tailwind CSS。',
       published: true,
       authorId: admin.id,

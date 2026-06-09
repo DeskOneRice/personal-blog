@@ -30,11 +30,11 @@ const { post } = Astro.props;
   <div class={`flex ${post.coverImage ? 'flex-col sm:flex-row' : 'flex-col'} p-0`}>
     <!-- 配图 -->
     {post.coverImage && (
-      <a href={`/posts/${post.id}/${post.slug}`} class="sm:w-48 flex-shrink-0 overflow-hidden">
+      <a href={`/posts/${post.id}/${post.slug}`} class="sm:w-56 flex-shrink-0 aspect-[16/9] overflow-hidden">
         <img
           src={post.coverImage}
           alt={post.title}
-          class="w-full h-40 sm:h-full object-cover hover:scale-105 transition-transform duration-300"
+          class="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
       </a>

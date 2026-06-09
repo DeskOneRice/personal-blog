@@ -1,0 +1,59 @@
+---
+/**
+ * ImageUpload.astro — 图片上传按钮
+ *
+ * 接收 targetInputId：上传成功后把 URL 填入指定 input。
+ */
+export interface Props {
+  targetInputId: string;
+}
+const { targetInputId } = Astro.props;
+---
+
+<span class="image-upload inline-flex items-center" data-target={targetInputId}>
+  <button type="button" class="px-2 py-2 rounded-md border border-[var(--color-border)] text-xs text-[var(--color-text-muted)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-accent)] transition-colors" title="本地上传图片 (最大2MB)">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+  </button>
+  <input type="file" accept="image/*" class="hidden" />
+  <span class="upload-status text-xs text-[var(--color-text-muted)] ml-1 hidden">上传中...</span>
+</span>
+
+<script>
+  document.querySelectorAll('.image-upload').forEach(el => {
+    const container = el as HTMLElement;
+    const targetId = container.dataset.target;
+    const btn = container.querySelector('button')!;
+    const fileInput = container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    const status = container.querySelector('.upload-status')!;
+
+    btn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      status.classList.remove('hidden');
+      btn.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+        const data = await resp.json();
+
+        if (resp.ok && data.url) {
+          const target = document.getElementById(targetId!) as HTMLInputElement;
+          if (target) target.value = data.url;
+        } else {
+          alert(data.error || '上传失败');
+        }
+      } catch {
+        alert('上传失败');
+      } finally {
+        status.classList.add('hidden');
+        btn.disabled = false;
+        fileInput.value = '';
+      }
+    });
+  });
+</script>

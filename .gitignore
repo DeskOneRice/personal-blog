@@ -25,5 +25,8 @@ Thumbs.db
 .vscode/settings.json
 .idea/
 
+# Uploads
+public/uploads/
+
 # Astro
 .astro/

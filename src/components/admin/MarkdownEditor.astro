@@ -11,20 +11,31 @@ const { textareaId } = Astro.props;
 <div class="editor-wrapper border border-[var(--color-border)] rounded-lg overflow-hidden" data-editor-id={textareaId}>
   <!-- 工具栏 -->
   <div class="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
-    <button type="button" data-action="heading" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="标题">H</button>
-    <button type="button" data-action="bold" class="tool-btn px-1.5 py-1 rounded text-xs font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="加粗">B</button>
-    <button type="button" data-action="italic" class="tool-btn px-1.5 py-1 rounded text-xs italic text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="斜体">I</button>
-    <button type="button" data-action="strikethrough" class="tool-btn px-1.5 py-1 rounded text-xs line-through text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="删除线">S</button>
+    <button type="button" data-action="h2" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)] font-bold" title="H2 标题">H2</button>
+    <button type="button" data-action="h3" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)] font-bold" title="H3 标题">H3</button>
+    <button type="button" data-action="h4" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="H4 标题">H4</button>
     <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
-    <button type="button" data-action="quote" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="引用">❝</button>
-    <button type="button" data-action="code-inline" class="tool-btn px-1.5 py-1 rounded text-xs font-mono text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="行内代码">&lt;/&gt;</button>
-    <button type="button" data-action="code-block" class="tool-btn px-1.5 py-1 rounded text-xs font-mono text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="代码块">🗖</button>
+    <button type="button" data-action="bold" class="tool-btn px-2 py-1 rounded text-sm font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="加粗 Ctrl+B"><b>B</b></button>
+    <button type="button" data-action="italic" class="tool-btn px-2 py-1 rounded text-sm italic text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="斜体 Ctrl+I"><i>I</i></button>
+    <button type="button" data-action="strikethrough" class="tool-btn px-2 py-1 rounded text-xs line-through text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="删除线">S</button>
+    <button type="button" data-action="underline" class="tool-btn px-2 py-1 rounded text-xs underline text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="下划线">U</button>
     <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
-    <button type="button" data-action="ul" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="无序列表">•≡</button>
-    <button type="button" data-action="ol" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="有序列表">1.</button>
-    <button type="button" data-action="link" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="链接">🔗</button>
-    <button type="button" data-action="image" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="图片">🖼</button>
-    <button type="button" data-action="hr" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="分割线">—</button>
+    <button type="button" data-action="quote" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="引用">❝</button>
+    <button type="button" data-action="code-inline" class="tool-btn px-2 py-1 rounded text-xs font-mono text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="行内代码">&lt;/&gt;</button>
+    <button type="button" data-action="code-block" class="tool-btn px-2 py-1 rounded text-xs font-mono text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="代码块">&#123;&#125;</button>
+    <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
+    <button type="button" data-action="ul" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="无序列表">•≡</button>
+    <button type="button" data-action="ol" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="有序列表">1≡</button>
+    <button type="button" data-action="task" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="任务列表">☑</button>
+    <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
+    <button type="button" data-action="link" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="链接">🔗</button>
+    <button type="button" data-action="image" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="图片 URL">🖼</button>
+    <button type="button" data-action="upload" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="本地上传图片 (最大2MB)">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+    </button>
+    <button type="button" data-action="table" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="表格">⊞</button>
+    <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
+    <button type="button" data-action="hr" class="tool-btn px-2 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="分割线">—</button>
   </div>
 
   <!-- 编辑+预览区 -->
@@ -70,16 +81,20 @@ const { textareaId } = Astro.props;
 
     // --- 工具栏操作 ---
     const actions: Record<string, (t: HTMLTextAreaElement) => void> = {
+      h2(t) { prefixLines(t, '## '); },
+      h3(t) { prefixLines(t, '### '); },
+      h4(t) { prefixLines(t, '#### '); },
       bold(t)   { wrapSelection(t, '**', '**', '加粗文字'); },
       italic(t) { wrapSelection(t, '*', '*', '斜体文字'); },
+      underline(t) { wrapSelection(t, '<u>', '</u>', '下划线文字'); },
       strikethrough(t) { wrapSelection(t, '~~', '~~', '删除文字'); },
       'code-inline'(t) { wrapSelection(t, '`', '`', '代码'); },
+      'code-block'(t) { wrapSelection(t, '\n```\n', '\n```\n', '代码'); },
       quote(t)  { prefixLines(t, '> '); },
-      heading(t){ prefixLines(t, '## '); },
       ul(t)     { prefixLines(t, '- '); },
       ol(t)     { prefixLines(t, '1. '); },
+      task(t)   { prefixLines(t, '- [ ] '); },
       hr(t)     { insertAtCursor(t, '\n---\n'); },
-      'code-block'(t) { wrapSelection(t, '\n```\n', '\n```\n', '代码'); },
       link(t)   {
         const url = prompt('链接地址:');
         if (url) {
@@ -93,6 +108,39 @@ const { textareaId } = Astro.props;
           const alt = t.value.substring(t.selectionStart, t.selectionEnd) || '图片描述';
           insertAtCursor(t, `![${alt}](${url})`);
         }
+      },
+      table(t)  {
+        const cols = parseInt(prompt('表格列数:', '3') || '3');
+        const rows = parseInt(prompt('表格行数:', '2') || '2');
+        let md = '|' + ' 列 |'.repeat(cols) + '\n';
+        md += '|' + ' --- |'.repeat(cols) + '\n';
+        for (let r = 1; r < rows; r++) {
+          md += '|' + '  |'.repeat(cols) + '\n';
+        }
+        insertAtCursor(t, '\n' + md + '\n');
+      },
+      upload(t) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          try {
+            const fd = new FormData();
+            fd.append('file', file);
+            const resp = await fetch('/api/upload', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (resp.ok && data.url) {
+              const alt = t.value.substring(t.selectionStart, t.selectionEnd) || '图片';
+              insertAtCursor(t, `![${alt}](${data.url})`);
+              updatePreview();
+            } else {
+              alert(data.error || '上传失败');
+            }
+          } catch { alert('上传失败'); }
+        };
+        input.click();
       },
     };
 
