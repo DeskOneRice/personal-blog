@@ -1,0 +1,53 @@
+---
+/**
+ * /columns/[slug] — 专栏详情（按序展示文章）
+ */
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import PostCard from '../../components/blog/PostCard.astro';
+import { prisma } from '../../lib/prisma';
+
+const { slug } = Astro.params;
+
+const column = await prisma.column.findUnique({
+  where: { slug },
+  include: {
+    posts: {
+      include: {
+        post: {
+          include: {
+            category: { select: { name: true, slug: true } },
+            tags: { select: { tag: { select: { name: true, slug: true } } } },
+          },
+        },
+      },
+      orderBy: { sortOrder: 'asc' },
+    },
+  },
+});
+
+if (!column) {
+  return Astro.redirect('/');
+}
+---
+
+<BaseLayout seo={{ title: column.name, description: column.description || `专栏「${column.name}」` }}>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-2">{column.name}</h1>
+  {column.description && <p class="text-[var(--color-text-secondary)] mb-6">{column.description}</p>}
+
+  {column.posts.length === 0 ? (
+    <p class="text-[var(--color-text-muted)]">暂无文章。</p>
+  ) : (
+    <div class="space-y-4">
+      {column.posts.map((cp) => (
+        <div class="flex items-start gap-3">
+          <span class="text-lg font-bold text-[var(--color-text-muted)] w-8 text-right flex-shrink-0 pt-5">
+            {cp.sortOrder + 1}
+          </span>
+          <div class="flex-1 min-w-0">
+            <PostCard post={cp.post} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</BaseLayout>

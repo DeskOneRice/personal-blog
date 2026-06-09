@@ -57,6 +57,7 @@ model Post {
   categoryId  Int?
   category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   tags        PostTag[]
+  columns     ColumnPost[]
 }
 
 // ============================================================
@@ -108,6 +109,29 @@ model Friend {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// 专栏（系列文章合集，按序排列）
+// ============================================================
+model Column {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  description String?
+  coverImage  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  posts       ColumnPost[]
+}
+
+model ColumnPost {
+  columnId  Int
+  postId    Int
+  sortOrder Int    @default(0)
+  column    Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  post      Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@id([columnId, postId])
 }
 
 // ============================================================

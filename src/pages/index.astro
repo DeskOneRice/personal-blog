@@ -6,6 +6,7 @@
  */
 import BaseLayout from '../components/layout/BaseLayout.astro';
 import HeroBanner from '../components/blog/HeroBanner.astro';
+import InlineSearch from '../components/blog/InlineSearch.astro';
 import PostCard from '../components/blog/PostCard.astro';
 import Pagination from '../components/blog/Pagination.astro';
 import Sidebar from '../components/blog/Sidebar.astro';
@@ -48,13 +49,18 @@ const siteDescription = configs.find(c => c.key === 'siteDescription')?.value ||
 
     <!-- 右栏：文章列表 -->
     <div class="flex-1 min-w-0 space-y-6">
+      <InlineSearch />
       {posts.length === 0 ? (
         <div class="text-center py-16">
           <h2 class="text-xl font-bold text-[var(--color-text-secondary)]">还没有文章</h2>
           <p class="text-[var(--color-text-muted)] mt-2">敬请期待...</p>
         </div>
       ) : (
-        posts.map(post => <PostCard post={post} />)
+        posts.map(post => (
+          <div class="post-card-wrapper" data-post-id={post.id}>
+            <PostCard post={post} />
+          </div>
+        ))
       )}
 
       <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl="/" />

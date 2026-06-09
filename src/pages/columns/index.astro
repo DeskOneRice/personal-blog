@@ -1,0 +1,31 @@
+---
+/**
+ * /columns/ — 专栏列表
+ */
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import { prisma } from '../../lib/prisma';
+
+const columns = await prisma.column.findMany({
+  include: { _count: { select: { posts: true } } },
+  orderBy: { createdAt: 'desc' },
+});
+---
+
+<BaseLayout seo={{ title: '专栏', description: '系列文章合集' }}>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">专栏</h1>
+
+  {columns.length === 0 ? (
+    <p class="text-[var(--color-text-muted)]">暂无专栏。</p>
+  ) : (
+    <div class="grid gap-4 sm:grid-cols-2">
+      {columns.map(col => (
+        <a href={`/columns/${col.slug}`}
+          class="block p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] hover:shadow-md hover:border-[var(--color-accent)] transition-all">
+          <h3 class="font-semibold text-[var(--color-text-primary)]">{col.name}</h3>
+          {col.description && <p class="text-sm text-[var(--color-text-secondary)] mt-1 line-clamp-2" title={col.description!}>{col.description}</p>}
+          <p class="text-xs text-[var(--color-text-muted)] mt-2">{col._count.posts} 篇文章</p>
+        </a>
+      ))}
+    </div>
+  )}
+</BaseLayout>

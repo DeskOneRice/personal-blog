@@ -1,0 +1,81 @@
+---
+/**
+ * InlineSearch.astro — 首页内嵌搜索
+ *
+ * 文章区顶部搜索框，输入关键词实时筛选文章卡片。
+ * 不走 /search 页面，直接在首页展示/隐藏卡片。
+ */
+---
+
+<div id="inline-search" class="relative mb-6">
+  <div class="relative">
+    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <input
+      id="inline-search-input"
+      type="text"
+      placeholder="搜索文章..."
+      class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent"
+      autocomplete="off"
+    />
+    <button id="inline-search-clear" class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hidden" type="button">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <!-- 搜索结果提示 -->
+  <p id="inline-search-info" class="text-xs text-[var(--color-text-muted)] mt-2 hidden"></p>
+</div>
+
+<script>
+  import Fuse from 'fuse.js';
+
+  interface PostDoc { id: number; slug: string; title: string; excerpt: string; category: string; date: string; }
+  let fuse: Fuse<PostDoc> | null = null;
+  let allCards: HTMLElement[] = [];
+
+  async function init() {
+    // 收集首页所有文章卡片
+    const input = document.getElementById('inline-search-input') as HTMLInputElement;
+    const clearBtn = document.getElementById('inline-search-clear')!;
+    const info = document.getElementById('inline-search-info')!;
+
+    allCards = Array.from(document.querySelectorAll<HTMLElement>('.post-card-wrapper'));
+
+    // 加载搜索索引
+    try {
+      const resp = await fetch('/api/search-index');
+      const posts: PostDoc[] = await resp.json();
+      fuse = new Fuse(posts, { keys: ['title', 'excerpt', 'category'], threshold: 0.3 });
+    } catch { /* 加载失败则搜索不可用 */ }
+
+    input.addEventListener('input', () => {
+      const q = input.value.trim();
+      clearBtn.classList.toggle('hidden', !q);
+
+      if (!q || !fuse) {
+        // 显示全部
+        allCards.forEach(c => c.style.display = '');
+        info.classList.add('hidden');
+        return;
+      }
+
+      const results = fuse.search(q);
+      const matchedIds = new Set(results.map(r => r.item.id));
+
+      allCards.forEach(c => {
+        const cardId = parseInt(c.dataset.postId || '');
+        c.style.display = matchedIds.has(cardId) ? '' : 'none';
+      });
+
+      info.textContent = `找到 ${results.length} 篇`;
+      info.classList.remove('hidden');
+    });
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+      input.focus();
+    });
+  }
+
+  init();
+</script>

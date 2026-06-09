@@ -1,0 +1,238 @@
+---
+/**
+ * /admin/columns — 专栏管理
+ */
+import AdminLayout from '../../components/layout/AdminLayout.astro';
+import { prisma } from '../../lib/prisma';
+import { formatDate } from '../../lib/utils';
+import type { SessionUser } from '../../lib/auth';
+
+const user = Astro.locals.user as SessionUser | undefined;
+
+const [columns, publishedPosts] = await Promise.all([
+  prisma.column.findMany({
+    include: { posts: { include: { post: { select: { id: true, title: true, slug: true } } }, orderBy: { sortOrder: 'asc' } } },
+    orderBy: { createdAt: 'desc' },
+  }),
+  prisma.post.findMany({ where: { published: true }, select: { id: true, title: true }, orderBy: { createdAt: 'desc' } }),
+]);
+---
+
+<AdminLayout title="专栏管理" user={user ?? null}>
+  <!-- 新建专栏 -->
+  <div class="mb-6 flex gap-2">
+    <input id="new-name" type="text" placeholder="专栏名称"
+      class="flex-1 px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+    <input id="new-desc" type="text" placeholder="简介 (可选)"
+      class="flex-1 px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] hidden sm:block" />
+    <button id="add-btn" class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white text-sm">创建</button>
+  </div>
+
+  <!-- 专栏列表 -->
+  <div class="space-y-4">
+    {columns.map(col => (
+      <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-medium text-[var(--color-text-primary)]">
+              {col.name}
+              <span class="text-xs font-normal text-[var(--color-text-muted)] ml-2">{formatDate(col.createdAt)}</span>
+            </h3>
+            {col.description && <p class="text-xs text-[var(--color-text-muted)] mt-0.5">{col.description}</p>}
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="text-sm text-[var(--color-accent)] hover:underline edit-col-btn"
+              data-id={col.id} data-name={col.name} data-desc={col.description || ''}>编辑</button>
+            <button class="text-sm text-red-500 hover:underline delete-col-btn" data-id={col.id} data-name={col.name}>删除</button>
+          </div>
+        </div>
+
+        <!-- 文章列表（支持拖拽排序，最多显示8篇高度，超出滚动） -->
+        <div class="post-list space-y-1 max-h-72 overflow-y-auto" data-column-id={col.id}>
+          {col.posts.map(cp => (
+            <div class="post-item flex items-center gap-2 px-3 py-1.5 rounded bg-[var(--color-bg-secondary)] text-sm cursor-grab active:cursor-grabbing hover:bg-[var(--color-bg-primary)] transition-colors"
+              draggable="true" data-post-id={cp.post.id} data-col-id={col.id}>
+              <span class="drag-handle text-[var(--color-text-muted)] text-xs select-none">⠿</span>
+              <span class="post-index text-[var(--color-text-muted)] text-xs">{cp.sortOrder + 1}.</span>
+              <a href={`/posts/${cp.post.id}/${cp.post.slug}`} class="flex-1 text-[var(--color-text-primary)] hover:text-[var(--color-accent)] truncate">{cp.post.title}</a>
+              <button class="text-xs text-red-400 hover:text-red-500 remove-post-btn" data-post-id={cp.post.id} data-col-id={col.id}>×</button>
+            </div>
+          ))}
+          <div class="text-xs text-[var(--color-text-muted)] px-3 py-1.5">
+            {col.posts.length === 0 ? '暂无文章' : `${col.posts.length} 篇，拖拽排序`}
+          </div>
+        </div>
+
+        <!-- 添加文章 -->
+        <div class="mt-2 flex gap-2">
+          <select class="add-post-select flex-1 px-3 py-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-primary)]" data-col-id={col.id}>
+            <option value="">添加文章...</option>
+            {publishedPosts.filter(p => !col.posts.some(cp => cp.post.id === p.id)).map(p => (
+              <option value={p.id}>{p.title}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <dialog id="edit-dialog" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-6 shadow-lg">
+    <h3 class="text-lg font-semibold mb-4">编辑专栏</h3>
+    <input id="edit-id" type="hidden" />
+    <div class="space-y-3">
+      <div><label class="text-sm">名称</label><input id="edit-name" type="text" class="w-full px-3 py-2 mt-1 rounded-md border border-[var(--color-border)]" /></div>
+      <div><label class="text-sm">简介</label><input id="edit-desc" type="text" class="w-full px-3 py-2 mt-1 rounded-md border border-[var(--color-border)]" /></div>
+      <div class="flex gap-2 justify-end">
+        <button id="edit-cancel" class="px-4 py-2 rounded-md border border-[var(--color-border)] text-sm">取消</button>
+        <button id="edit-save" class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white text-sm">保存</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    // 创建
+    document.getElementById('add-btn')?.addEventListener('click', async () => {
+      const name = (document.getElementById('new-name') as HTMLInputElement).value.trim();
+      if (!name) return alert('请输入专栏名');
+      const desc = (document.getElementById('new-desc') as HTMLInputElement).value.trim();
+      const resp = await fetch('/api/columns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: desc || null }),
+      });
+      if (resp.ok) window.location.reload();
+      else alert('创建失败');
+    });
+
+    // 删除
+    document.querySelectorAll('.delete-col-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const el = btn as HTMLElement;
+        if (!confirm(`删除专栏「${el.dataset.name}」？`)) return;
+        const resp = await fetch(`/api/columns?id=${el.dataset.id}`, { method: 'DELETE' });
+        if (resp.ok) window.location.reload();
+        else alert('删除失败');
+      });
+    });
+
+    // 编辑弹窗
+    const dialog = document.getElementById('edit-dialog') as HTMLDialogElement;
+    document.querySelectorAll('.edit-col-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const el = btn as HTMLElement;
+        (document.getElementById('edit-id') as HTMLInputElement).value = el.dataset.id!;
+        (document.getElementById('edit-name') as HTMLInputElement).value = el.dataset.name!;
+        (document.getElementById('edit-desc') as HTMLInputElement).value = el.dataset.desc!;
+        dialog.showModal();
+      });
+    });
+    document.getElementById('edit-cancel')?.addEventListener('click', () => dialog.close());
+    document.getElementById('edit-save')?.addEventListener('click', async () => {
+      const id = (document.getElementById('edit-id') as HTMLInputElement).value;
+      const resp = await fetch(`/api/columns?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: (document.getElementById('edit-name') as HTMLInputElement).value.trim(),
+          description: (document.getElementById('edit-desc') as HTMLInputElement).value.trim() || null,
+        }),
+      });
+      if (resp.ok) window.location.reload();
+      else alert('更新失败');
+    });
+
+    // 添加文章到专栏
+    document.querySelectorAll('.add-post-select').forEach(select => {
+      select.addEventListener('change', async () => {
+        const colId = (select as HTMLElement).dataset.colId!;
+        const postId = (select as HTMLSelectElement).value;
+        if (!postId) return;
+        const container = document.querySelector(`.post-list[data-column-id="${colId}"]`)!;
+        const currentPosts = Array.from(container.querySelectorAll('.remove-post-btn'))
+          .map(b => parseInt((b as HTMLElement).dataset.postId!));
+        currentPosts.push(parseInt(postId));
+
+        const resp = await fetch(`/api/columns?id=${colId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postIds: currentPosts }),
+        });
+        if (resp.ok) window.location.reload();
+        else alert('添加失败');
+      });
+    });
+
+    // 移除文章
+    document.querySelectorAll('.remove-post-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const el = btn as HTMLElement;
+        const colId = el.dataset.colId!;
+        const postId = parseInt(el.dataset.postId!);
+        const container = document.querySelector(`.post-list[data-column-id="${colId}"]`)!;
+        const remaining = Array.from(container.querySelectorAll('.remove-post-btn'))
+          .map(b => parseInt((b as HTMLElement).dataset.postId!))
+          .filter(id => id !== postId);
+
+        const resp = await fetch(`/api/columns?id=${colId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postIds: remaining }),
+        });
+        if (resp.ok) window.location.reload();
+        else alert('移除失败');
+      });
+    });
+
+    // ========== 拖拽排序 ==========
+    let dragSrcEl: HTMLElement | null = null;
+
+    document.querySelectorAll('.post-list').forEach(list => {
+      list.addEventListener('dragstart', (e) => {
+        const item = (e.target as HTMLElement).closest('.post-item') as HTMLElement;
+        if (!item) return;
+        dragSrcEl = item;
+        item.classList.add('opacity-50');
+        e.dataTransfer!.effectAllowed = 'move';
+      });
+
+      list.addEventListener('dragend', (e) => {
+        const item = (e.target as HTMLElement).closest('.post-item') as HTMLElement;
+        if (item) item.classList.remove('opacity-50');
+        dragSrcEl = null;
+      });
+
+      list.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer!.dropEffect = 'move';
+        const target = (e.target as HTMLElement).closest('.post-item') as HTMLElement;
+        if (!target || target === dragSrcEl) return;
+
+        const items = Array.from(list.querySelectorAll('.post-item'));
+        const srcIdx = items.indexOf(dragSrcEl!);
+        const tgtIdx = items.indexOf(target);
+        if (srcIdx < tgtIdx) {
+          list.insertBefore(dragSrcEl!, target.nextSibling);
+        } else {
+          list.insertBefore(dragSrcEl!, target);
+        }
+        // 更新序号显示
+        list.querySelectorAll('.post-index').forEach((el, i) => { el.textContent = `${i + 1}.`; });
+      });
+
+      list.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        const colId = (list as HTMLElement).dataset.columnId!;
+        const postIds = Array.from(list.querySelectorAll('.post-item'))
+          .map(el => parseInt((el as HTMLElement).dataset.postId!));
+
+        const resp = await fetch(`/api/columns?id=${colId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postIds }),
+        });
+        if (!resp.ok) alert('排序保存失败');
+      });
+    });
+  </script>
+</AdminLayout>
