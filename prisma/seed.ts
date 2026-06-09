@@ -243,6 +243,12 @@ model Post {
     { key: 'enableRegistration', value: 'false' },
     { key: 'dailyQuotes', value: '千里之行，始于足下。\n学而不思则罔，思而不学则殆。\nStay hungry, stay foolish.\n代码是写给人看的，顺便能在机器上运行。\n简单是可靠的先决条件。\n最好的代码是没有代码。\nDone is better than perfect.\n技术改变世界，代码书写人生。\n每天进步一点点。\n学习是一辈子的事。' },
     { key: 'announcement', value: '🎉 博客正式上线！欢迎来到我的个人空间，这里记录我的技术学习与生活思考。' },
+    { key: 'aboutAvatar', value: '' },
+    { key: 'aboutName', value: 'DeskOneRice' },
+    { key: 'aboutRole', value: '全栈开发者 / 深度学习爱好者' },
+    { key: 'aboutLocation', value: '地球' },
+    { key: 'aboutGithub', value: 'https://github.com/DeskOneRice' },
+    { key: 'aboutEmail', value: '' },
   ];
   for (const cfg of configs) {
     await prisma.siteConfig.upsert({

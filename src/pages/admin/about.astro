@@ -1,0 +1,116 @@
+---
+/**
+ * /admin/about — 关于页编辑
+ */
+import AdminLayout from '../../components/layout/AdminLayout.astro';
+import ImageUpload from '../../components/admin/ImageUpload.astro';
+import { prisma } from '../../lib/prisma';
+import type { SessionUser } from '../../lib/auth';
+
+const user = Astro.locals.user as SessionUser | undefined;
+
+const configs = await prisma.siteConfig.findMany({
+  where: { key: { startsWith: 'about' } },
+});
+const g = (k: string) => configs.find(c => c.key === k)?.value || '';
+---
+
+<AdminLayout title="关于页设置" user={user ?? null}>
+  <form id="about-form" class="max-w-2xl space-y-5">
+    <div class="grid gap-5 sm:grid-cols-2">
+      <div>
+        <label for="aboutName" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">昵称</label>
+        <input id="aboutName" type="text" value={g('aboutName')}
+          class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+      </div>
+      <div>
+        <label for="aboutRole" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">角色/标签</label>
+        <input id="aboutRole" type="text" value={g('aboutRole')}
+          class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+      </div>
+      <div>
+        <label for="aboutAvatar" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">头像 URL</label>
+        <div class="flex gap-2">
+          <input id="aboutAvatar" type="text" value={g('aboutAvatar')}
+            class="flex-1 px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            placeholder="留空则显示昵称首字" />
+          <ImageUpload targetInputId="aboutAvatar" />
+        </div>
+      </div>
+      <div>
+        <label for="aboutLocation" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">位置</label>
+        <input id="aboutLocation" type="text" value={g('aboutLocation')}
+          class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+      </div>
+      <div>
+        <label for="aboutGithub" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">GitHub</label>
+        <input id="aboutGithub" type="text" value={g('aboutGithub')}
+          class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+      </div>
+      <div>
+        <label for="aboutEmail" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">邮箱</label>
+        <input id="aboutEmail" type="text" value={g('aboutEmail')}
+          class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+      </div>
+    </div>
+
+    <div>
+      <label for="aboutContent" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">自我介绍 (Markdown)</label>
+      <textarea id="aboutContent" rows="6"
+        class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]">{g('aboutContent')}</textarea>
+    </div>
+
+    <div class="flex gap-3">
+      <button type="submit" class="px-6 py-2 rounded-md bg-[var(--color-accent)] text-white font-medium">保存</button>
+      <button type="button" id="save-and-preview" class="px-6 py-2 rounded-md border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]">保存并查看 →</button>
+    </div>
+
+    <div id="form-msg" class="text-sm hidden"></div>
+  </form>
+
+  <script>
+    function getUpdates() {
+      return ['aboutName','aboutRole','aboutAvatar','aboutLocation','aboutGithub','aboutEmail','aboutContent'].map(key => ({
+        key,
+        value: (document.getElementById(key) as HTMLInputElement | HTMLTextAreaElement).value,
+      }));
+    }
+
+    async function doSave(): Promise<boolean> {
+      const msg = document.getElementById('form-msg')!;
+      try {
+        const resp = await fetch('/api/site-config', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(getUpdates()),
+        });
+        if (resp.ok) {
+          msg.textContent = '保存成功 ✓';
+          msg.className = 'text-sm text-green-500';
+          msg.classList.remove('hidden');
+          return true;
+        } else {
+          msg.textContent = '保存失败';
+          msg.className = 'text-sm text-red-500';
+          msg.classList.remove('hidden');
+          return false;
+        }
+      } catch {
+        msg.textContent = '网络错误';
+        msg.className = 'text-sm text-red-500';
+        msg.classList.remove('hidden');
+        return false;
+      }
+    }
+
+    document.getElementById('about-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await doSave();
+    });
+
+    document.getElementById('save-and-preview')?.addEventListener('click', async () => {
+      const ok = await doSave();
+      if (ok) window.open('/about', '_blank');
+    });
+  </script>
+</AdminLayout>

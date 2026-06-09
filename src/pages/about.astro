@@ -2,22 +2,79 @@
 /**
  * about.astro — 关于页
  *
- * 内容从数据库 SiteConfig 表读取（key='aboutContent'），
- * 支持 Markdown，便于管理员在后台编辑关于内容。
+ * 模块化展示：头像/简介 + 统计数据 + 内容（Markdown 正文）
  */
 import BaseLayout from '../components/layout/BaseLayout.astro';
 import { prisma } from '../lib/prisma';
 import { renderMarkdown } from '../lib/markdown';
 
-const aboutConfig = await prisma.siteConfig.findUnique({
-  where: { key: 'aboutContent' },
-});
+const configs = await prisma.siteConfig.findMany();
+const g = (k: string, d = '') => configs.find(c => c.key === k)?.value || d;
 
-const content = aboutConfig?.value || '## 关于我\n\n暂无介绍，请通过管理后台设置。';
+const avatar = g('aboutAvatar');
+const name = g('aboutName', '博主');
+const role = g('aboutRole');
+const location = g('aboutLocation');
+const github = g('aboutGithub');
+const email = g('aboutEmail');
+const content = g('aboutContent', '暂无介绍，请在管理后台设置。');
+
+const [postCount, columnCount, firstPost] = await Promise.all([
+  prisma.post.count({ where: { published: true } }),
+  prisma.column.count(),
+  prisma.post.findFirst({ where: { published: true }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
+]);
+
 const htmlContent = renderMarkdown(content);
 ---
 
-<BaseLayout seo={{ title: '关于', description: '关于我和这个博客' }}>
+<BaseLayout seo={{ title: '关于', description: `关于 ${name}` }}>
   <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">关于</h1>
-  <div class="prose" set:html={htmlContent} />
+
+  <!-- 个人信息区 -->
+  <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] mb-6">
+    <!-- 头像 -->
+    <div class="w-20 h-20 rounded-full overflow-hidden bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex-shrink-0 flex items-center justify-center">
+      {avatar ? (
+        <img src={avatar} alt={name} class="w-full h-full object-cover" />
+      ) : (
+        <span class="text-2xl font-bold text-[var(--color-text-muted)]">{name[0]}</span>
+      )}
+    </div>
+
+    <!-- 信息 -->
+    <div class="text-center sm:text-left">
+      <h2 class="text-xl font-bold text-[var(--color-text-primary)]">{name}</h2>
+      {role && <p class="text-sm text-[var(--color-accent)] mt-0.5">{role}</p>}
+      <div class="flex flex-wrap justify-center sm:justify-start items-center gap-3 mt-2 text-xs text-[var(--color-text-muted)]">
+        {location && <span>📍 {location}</span>}
+        {email && <a href={`mailto:${email}`} class="hover:text-[var(--color-accent)]">📧 {email}</a>}
+        {github && <a href={github} target="_blank" rel="noopener noreferrer" class="hover:text-[var(--color-accent)]">🐙 GitHub</a>}
+      </div>
+    </div>
+  </div>
+
+  <!-- 统计数据区 -->
+  <div class="grid grid-cols-3 gap-3 mb-6">
+    <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-center">
+      <p class="text-2xl font-bold text-[var(--color-accent)]">{postCount}</p>
+      <p class="text-xs text-[var(--color-text-muted)] mt-1">已发布文章</p>
+    </div>
+    <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-center">
+      <p class="text-2xl font-bold text-[var(--color-accent)]">{columnCount}</p>
+      <p class="text-xs text-[var(--color-text-muted)] mt-1">专栏</p>
+    </div>
+    <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4 text-center">
+      <p class="text-2xl font-bold text-[var(--color-accent)]">{
+        firstPost ? new Date().getFullYear() - firstPost.createdAt.getFullYear() + 1 : 1
+      }</p>
+      <p class="text-xs text-[var(--color-text-muted)] mt-1">博客年份</p>
+    </div>
+  </div>
+
+  <!-- 个人介绍正文 -->
+  <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-5">
+    <h3 class="text-sm font-medium text-[var(--color-text-secondary)] mb-3 pb-2 border-b border-[var(--color-border)]">📝 自我介绍</h3>
+    <div class="prose prose-sm" set:html={htmlContent} />
+  </div>
 </BaseLayout>
