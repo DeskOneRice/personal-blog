@@ -28,6 +28,8 @@ function parseFrontmatter(md: string): { meta: Record<string, string | string[] 
           meta.tags = value.replace(/^\[|\]$/g, '').split(',').map(t => t.trim().replace(/["']/g, '')).filter(Boolean);
         } else if (key === 'published') {
           meta.published = value === 'true';
+        } else if (key === 'date') {
+          meta.date = value;
         } else {
           meta[key] = value;
         }
@@ -43,6 +45,9 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
+    // 客户端传来的文件修改时间（毫秒时间戳数组）
+    const lastModifiedRaw = formData.get('lastModified') as string | null;
+    const lastModifiedArr: number[] = lastModifiedRaw ? JSON.parse(lastModifiedRaw) : [];
 
     if (!files.length) {
       return new Response(JSON.stringify({ error: '未选择文件' }), {
@@ -52,7 +57,8 @@ export const POST: APIRoute = async ({ request }) => {
 
     const results: { file: string; status: string; message: string }[] = [];
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       if (!file.name.endsWith('.md')) {
         results.push({ file: file.name, status: 'skip', message: '非 .md 文件' });
         continue;
@@ -60,7 +66,12 @@ export const POST: APIRoute = async ({ request }) => {
 
       const raw = await file.text();
       const { meta, content } = parseFrontmatter(raw);
+
       const title = (meta.title as string) || file.name.replace(/\.md$/, '');
+      // 文章时间：frontmatter date > 客户端文件时间 > 当前时间
+      const dateStr = meta.date as string | undefined;
+      const clientTime = lastModifiedArr[i] ? new Date(lastModifiedArr[i]) : null;
+      const articleTime = dateStr ? new Date(dateStr) : (clientTime && !isNaN(clientTime.getTime()) ? clientTime : new Date());
 
       if (!content.trim()) {
         results.push({ file: file.name, status: 'skip', message: '正文为空' });
@@ -96,7 +107,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
 
       // 创建文章
-      await prisma.post.create({
+      const post = await prisma.post.create({
         data: {
           title,
           content,
@@ -109,6 +120,9 @@ export const POST: APIRoute = async ({ request }) => {
             : undefined,
         },
       });
+
+      // 覆盖创建时间
+      await prisma.post.update({ where: { id: post.id }, data: { createdAt: articleTime, updatedAt: articleTime } });
 
       results.push({ file: file.name, status: 'ok', message: `→ "${title}"` });
     }

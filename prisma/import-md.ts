@@ -71,6 +71,8 @@ function parseFrontmatter(md: string): { meta: Frontmatter; content: string } {
           meta.category = value;
         } else if (key === 'coverImage') {
           meta.coverImage = value;
+        } else if (key === 'date') {
+          meta.date = value;
         } else if (key === 'excerpt') {
           meta.excerpt = value;
         } else if (key === 'slug') {
@@ -96,6 +98,7 @@ async function main() {
     const filePath = join(postsDir, file);
     const raw = readFileSync(filePath, 'utf-8');
     const { meta, content } = parseFrontmatter(raw);
+    const stat = statSync(filePath);
 
     const title = meta.title || file.replace(/\.md$/, '');
 
@@ -140,6 +143,9 @@ async function main() {
       data: {
         title,
         content,
+        // 取 frontmatter date 或文件修改时间
+        createdAt: meta.date ? new Date(meta.date as string) : stat.mtime,
+        updatedAt: meta.date ? new Date(meta.date as string) : stat.mtime,
         excerpt: meta.excerpt || null,
         coverImage: meta.coverImage || null,
         published: meta.published ?? false,

@@ -101,7 +101,12 @@ const posts = await prisma.post.findMany({
       importBtn.setAttribute('disabled', 'true');
 
       const formData = new FormData();
-      for (const f of files) formData.append('files', f);
+      const lastModifiedArr: number[] = [];
+      for (const f of files) {
+        formData.append('files', f);
+        lastModifiedArr.push(f.lastModified);
+      }
+      formData.append('lastModified', JSON.stringify(lastModifiedArr));
 
       try {
         const resp = await fetch('/api/import-md', { method: 'POST', body: formData });
