@@ -1,0 +1,152 @@
+---
+/**
+ * MarkdownEditor.astro — 带工具栏的 MD 编辑器
+ * 左写右预览，顶部工具栏快捷插入格式
+ */
+export interface Props {
+  textareaId: string;
+}
+const { textareaId } = Astro.props;
+---
+<div class="editor-wrapper border border-[var(--color-border)] rounded-lg overflow-hidden" data-editor-id={textareaId}>
+  <!-- 工具栏 -->
+  <div class="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-[var(--color-bg-secondary)] border-b border-[var(--color-border)]">
+    <button type="button" data-action="heading" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="标题">H</button>
+    <button type="button" data-action="bold" class="tool-btn px-1.5 py-1 rounded text-xs font-bold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="加粗">B</button>
+    <button type="button" data-action="italic" class="tool-btn px-1.5 py-1 rounded text-xs italic text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="斜体">I</button>
+    <button type="button" data-action="strikethrough" class="tool-btn px-1.5 py-1 rounded text-xs line-through text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="删除线">S</button>
+    <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
+    <button type="button" data-action="quote" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="引用">❝</button>
+    <button type="button" data-action="code-inline" class="tool-btn px-1.5 py-1 rounded text-xs font-mono text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="行内代码">&lt;/&gt;</button>
+    <button type="button" data-action="code-block" class="tool-btn px-1.5 py-1 rounded text-xs font-mono text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="代码块">🗖</button>
+    <span class="w-px h-4 bg-[var(--color-border)] mx-1"></span>
+    <button type="button" data-action="ul" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="无序列表">•≡</button>
+    <button type="button" data-action="ol" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="有序列表">1.</button>
+    <button type="button" data-action="link" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="链接">🔗</button>
+    <button type="button" data-action="image" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="图片">🖼</button>
+    <button type="button" data-action="hr" class="tool-btn px-1.5 py-1 rounded text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]" title="分割线">—</button>
+  </div>
+
+  <!-- 编辑+预览区 -->
+  <div class="flex flex-col lg:flex-row">
+    <div class="flex-1 min-w-0">
+      <slot />
+    </div>
+    <div class="hidden lg:block w-px bg-[var(--color-border)]"></div>
+    <div class="flex-1 min-w-0 hidden lg:block">
+      <div class="preview-pane prose prose-sm p-4 min-h-[280px] bg-[var(--color-bg-primary)] text-sm">
+        <p class="text-[var(--color-text-muted)]">预览区域</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 移动端切换按钮 -->
+  <div class="lg:hidden flex border-t border-[var(--color-border)]">
+    <button type="button" class="tab-btn active flex-1 py-1.5 text-xs text-center text-[var(--color-text-primary)] border-b-2 border-[var(--color-accent)]" data-tab="edit">编辑</button>
+    <button type="button" class="tab-btn flex-1 py-1.5 text-xs text-center text-[var(--color-text-muted)]" data-tab="preview">预览</button>
+  </div>
+</div>
+
+<script>
+  import { marked } from 'marked';
+
+  document.querySelectorAll('.editor-wrapper').forEach((wrapper) => {
+    const id = (wrapper as HTMLElement).dataset.editorId;
+    if (!id) return;
+    const textarea = document.getElementById(id) as HTMLTextAreaElement;
+    const preview = wrapper.querySelector('.preview-pane') as HTMLDivElement;
+    if (!textarea) return;
+
+    // --- 预览更新 ---
+    function updatePreview() {
+      if (!preview) return;
+      if (textarea.value.trim()) {
+        preview.innerHTML = marked.parse(textarea.value) as string;
+      } else {
+        preview.innerHTML = '<p class="text-[var(--color-text-muted)]">预览区域</p>';
+      }
+    }
+    textarea.addEventListener('input', updatePreview);
+
+    // --- 工具栏操作 ---
+    const actions: Record<string, (t: HTMLTextAreaElement) => void> = {
+      bold(t)   { wrapSelection(t, '**', '**', '加粗文字'); },
+      italic(t) { wrapSelection(t, '*', '*', '斜体文字'); },
+      strikethrough(t) { wrapSelection(t, '~~', '~~', '删除文字'); },
+      'code-inline'(t) { wrapSelection(t, '`', '`', '代码'); },
+      quote(t)  { prefixLines(t, '> '); },
+      heading(t){ prefixLines(t, '## '); },
+      ul(t)     { prefixLines(t, '- '); },
+      ol(t)     { prefixLines(t, '1. '); },
+      hr(t)     { insertAtCursor(t, '\n---\n'); },
+      'code-block'(t) { wrapSelection(t, '\n```\n', '\n```\n', '代码'); },
+      link(t)   {
+        const url = prompt('链接地址:');
+        if (url) {
+          const sel = t.value.substring(t.selectionStart, t.selectionEnd) || '链接文字';
+          insertAtCursor(t, `[${sel}](${url})`);
+        }
+      },
+      image(t)  {
+        const url = prompt('图片地址:');
+        if (url) {
+          const alt = t.value.substring(t.selectionStart, t.selectionEnd) || '图片描述';
+          insertAtCursor(t, `![${alt}](${url})`);
+        }
+      },
+    };
+
+    wrapper.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = (btn as HTMLElement).dataset.action;
+        if (action && actions[action]) {
+          actions[action](textarea);
+          textarea.focus();
+          updatePreview();
+        }
+      });
+    });
+
+    // --- 移动端标签切换 ---
+    const editPanel = textarea.closest('.flex-1') as HTMLElement;
+    const previewPanel = preview?.closest('.flex-1') as HTMLElement;
+    wrapper.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = (btn as HTMLElement).dataset.tab;
+        wrapper.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.toggle('border-b-2', false);
+          b.classList.toggle('border-[var(--color-accent)]', false);
+          b.classList.toggle('text-[var(--color-text-primary)]', false);
+          b.classList.toggle('text-[var(--color-text-muted)]', true);
+        });
+        btn.classList.add('border-b-2', 'border-[var(--color-accent)]', 'text-[var(--color-text-primary)]');
+        btn.classList.remove('text-[var(--color-text-muted)]');
+        if (tab === 'edit') { editPanel && (editPanel.style.display = ''); if (previewPanel) previewPanel.style.display = 'none'; }
+        else { editPanel && (editPanel.style.display = 'none'); if (previewPanel) previewPanel.style.display = ''; }
+      });
+    });
+
+    updatePreview();
+  });
+
+  // --- 光标操作工具函数 ---
+  function wrapSelection(t: HTMLTextAreaElement, before: string, after: string, placeholder: string) {
+    const start = t.selectionStart, end = t.selectionEnd;
+    const sel = t.value.substring(start, end) || placeholder;
+    t.setRangeText(before + sel + after, start, end, 'select');
+  }
+
+  function insertAtCursor(t: HTMLTextAreaElement, text: string) {
+    const start = t.selectionStart;
+    t.setRangeText(text, start, t.selectionEnd, 'end');
+  }
+
+  function prefixLines(t: HTMLTextAreaElement, prefix: string) {
+    const start = t.selectionStart, end = t.selectionEnd;
+    const before = t.value.substring(0, start);
+    const lineStart = before.lastIndexOf('\n') + 1;
+    const sel = t.value.substring(lineStart, end);
+    const lines = sel.split('\n').map(l => prefix + l).join('\n');
+    t.setRangeText(lines, lineStart, end, 'end');
+  }
+</script>

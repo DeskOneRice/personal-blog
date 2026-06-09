@@ -1,0 +1,91 @@
+---
+/**
+ * PostCard.astro — 文章列表中的文章卡片
+ *
+ * 显示：标题、日期、分类、标签、摘要
+ */
+import { formatDate } from '../../lib/utils';
+import TagBadge from './TagBadge.astro';
+
+export interface PostSummary {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt?: string | null;
+  coverImage?: string | null;
+  published: boolean;
+  createdAt: Date | string;
+  category?: { name: string; slug: string } | null;
+  tags?: { tag: { name: string; slug: string } }[];
+}
+
+export interface Props {
+  post: PostSummary;
+}
+
+const { post } = Astro.props;
+---
+
+<article class="border border-[var(--color-border)] rounded-lg hover:shadow-md transition-shadow bg-[var(--color-bg-card)] overflow-hidden">
+  <div class={`flex ${post.coverImage ? 'flex-col sm:flex-row' : 'flex-col'} p-0`}>
+    <!-- 配图 -->
+    {post.coverImage && (
+      <a href={`/posts/${post.id}/${post.slug}`} class="sm:w-48 flex-shrink-0 overflow-hidden">
+        <img
+          src={post.coverImage}
+          alt={post.title}
+          class="w-full h-40 sm:h-full object-cover hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+      </a>
+    )}
+
+    <!-- 文字内容 -->
+    <div class="flex-1 p-5">
+      <h2 class="mb-2">
+        <a
+          href={`/posts/${post.id}/${post.slug}`}
+          class="text-xl font-bold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+        >
+          {post.title}
+        </a>
+      </h2>
+
+      <!-- 日期 + 分类 + 标签(同行) -->
+      <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--color-text-muted)] mb-3">
+        <time datetime={post.createdAt instanceof Date ? post.createdAt.toISOString() : String(post.createdAt)}>
+          {formatDate(post.createdAt)}
+        </time>
+        {post.category && (
+          <a href={`/categories/${post.category.slug}`} class="inline-flex items-center gap-1 hover:text-[var(--color-accent)] hover:underline transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+            {post.category.name}
+          </a>
+        )}
+        {post.tags && post.tags.length > 0 && (
+          <span class="inline-flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+            <span class="line-clamp-1" title={post.tags.map(t => t.tag.name).join(' / ')}>
+              {post.tags.map((t, i) => (
+                <>{i > 0 && ' / '}<a href={`/tags/${t.tag.slug}`} class="hover:text-[var(--color-accent)] hover:underline">{t.tag.name}</a></>
+              ))}
+            </span>
+          </span>
+        )}
+      </div>
+
+      {post.excerpt && (
+        <p class="text-[var(--color-text-secondary)] leading-relaxed line-clamp-2" title={post.excerpt}>
+          {post.excerpt}
+        </p>
+      )}
+
+      <a
+        href={`/posts/${post.id}/${post.slug}`}
+        class="inline-block mt-3 text-sm font-medium text-[var(--color-accent)] hover:underline"
+      >
+        阅读更多 →
+      </a>
+    </div>
+  </div>
+</article>

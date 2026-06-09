@@ -1,0 +1,123 @@
+---
+/**
+ * /admin/friends — 友链管理
+ */
+import AdminLayout from '../../components/layout/AdminLayout.astro';
+import { prisma } from '../../lib/prisma';
+import type { SessionUser } from '../../lib/auth';
+
+const user = Astro.locals.user as SessionUser | undefined;
+
+const friends = await prisma.friend.findMany({
+  orderBy: { sortOrder: 'asc' },
+});
+---
+
+<AdminLayout title="友链管理" user={user ?? null}>
+  <!-- 添加友链 -->
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+    <input id="new-name" type="text" placeholder="站点名称 *"
+      class="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+    <input id="new-url" type="url" placeholder="网址 *"
+      class="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+    <input id="new-avatar" type="url" placeholder="头像 URL (可选)"
+      class="px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+    <button id="add-btn" class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white text-sm">添加</button>
+  </div>
+
+  <!-- 友链列表 -->
+  <div class="space-y-2">
+    {friends.map(friend => (
+      <div class="flex items-center gap-3 p-3 bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)]">
+        {friend.avatar
+          ? <img src={friend.avatar} alt="" class="w-8 h-8 rounded-full object-cover" />
+          : <div class="w-8 h-8 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)]">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+            </div>
+        }
+        <div class="flex-1 min-w-0">
+          <a href={friend.url} target="_blank" class="font-medium text-[var(--color-text-primary)] hover:text-[var(--color-accent)]">{friend.name}</a>
+          {friend.description && <p class="text-xs text-[var(--color-text-muted)] line-clamp-2" title={friend.description}>{friend.description}</p>}
+        </div>
+        <button class="text-sm text-[var(--color-accent)] hover:underline edit-btn"
+          data-id={friend.id} data-name={friend.name} data-url={friend.url}
+          data-avatar={friend.avatar || ''} data-desc={friend.description || ''}>编辑</button>
+        <button class="text-sm text-red-500 hover:underline delete-btn"
+          data-id={friend.id} data-name={friend.name}>删除</button>
+      </div>
+    ))}
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <dialog id="edit-dialog" class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-6 shadow-lg">
+    <h3 class="text-lg font-semibold mb-4">编辑友链</h3>
+    <input id="edit-id" type="hidden" />
+    <div class="space-y-3">
+      <div><label class="text-sm">名称</label><input id="edit-name" type="text" class="w-full px-3 py-2 mt-1 rounded-md border border-[var(--color-border)]" /></div>
+      <div><label class="text-sm">网址</label><input id="edit-url" type="url" class="w-full px-3 py-2 mt-1 rounded-md border border-[var(--color-border)]" /></div>
+      <div><label class="text-sm">头像 URL</label><input id="edit-avatar" type="url" class="w-full px-3 py-2 mt-1 rounded-md border border-[var(--color-border)]" placeholder="https://example.com/avatar.png" /></div>
+      <div><label class="text-sm">描述</label><input id="edit-desc" type="text" class="w-full px-3 py-2 mt-1 rounded-md border border-[var(--color-border)]" /></div>
+      <div class="flex gap-2 justify-end">
+        <button id="edit-cancel" class="px-4 py-2 rounded-md border border-[var(--color-border)] text-sm">取消</button>
+        <button id="edit-save" class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white text-sm">保存</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    document.getElementById('add-btn')?.addEventListener('click', async () => {
+      const name = (document.getElementById('new-name') as HTMLInputElement).value.trim();
+      const url = (document.getElementById('new-url') as HTMLInputElement).value.trim();
+      if (!name || !url) return alert('名称和网址不能为空');
+      const resp = await fetch('/api/friends', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, url,
+          avatar: (document.getElementById('new-avatar') as HTMLInputElement).value.trim() || null,
+        }),
+      });
+      if (resp.ok) window.location.reload();
+      else alert('添加失败');
+    });
+
+    const dialog = document.getElementById('edit-dialog') as HTMLDialogElement;
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const el = btn as HTMLElement;
+        (document.getElementById('edit-id') as HTMLInputElement).value = el.dataset.id!;
+        (document.getElementById('edit-name') as HTMLInputElement).value = el.dataset.name!;
+        (document.getElementById('edit-url') as HTMLInputElement).value = el.dataset.url!;
+        (document.getElementById('edit-avatar') as HTMLInputElement).value = el.dataset.avatar!;
+        (document.getElementById('edit-desc') as HTMLInputElement).value = el.dataset.desc!;
+        dialog.showModal();
+      });
+    });
+    document.getElementById('edit-cancel')?.addEventListener('click', () => dialog.close());
+    document.getElementById('edit-save')?.addEventListener('click', async () => {
+      const id = (document.getElementById('edit-id') as HTMLInputElement).value;
+      const resp = await fetch(`/api/friends?id=${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: (document.getElementById('edit-name') as HTMLInputElement).value.trim(),
+          url: (document.getElementById('edit-url') as HTMLInputElement).value.trim(),
+          avatar: (document.getElementById('edit-avatar') as HTMLInputElement).value.trim() || null,
+          description: (document.getElementById('edit-desc') as HTMLInputElement).value.trim() || null,
+        }),
+      });
+      if (resp.ok) window.location.reload();
+      else alert('更新失败');
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const el = btn as HTMLElement;
+        if (!confirm(`删除友链「${el.dataset.name}」？`)) return;
+        const resp = await fetch(`/api/friends?id=${el.dataset.id}`, { method: 'DELETE' });
+        if (resp.ok) window.location.reload();
+        else alert('删除失败');
+      });
+    });
+  </script>
+</AdminLayout>

@@ -1,0 +1,30 @@
+---
+/**
+ * tags/index.astro — 标签云页面
+ */
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import { prisma } from '../../lib/prisma';
+
+const tags = await prisma.tag.findMany({
+  include: {
+    _count: { select: { posts: { where: { post: { published: true } } } } },
+  },
+  orderBy: { name: 'asc' },
+});
+---
+
+<BaseLayout seo={{ title: '标签', description: '浏览所有标签' }}>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">标签</h1>
+
+  <div class="flex flex-wrap gap-3">
+    {tags.map(tag => (
+      <a
+        href={`/tags/${tag.slug}`}
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 transition-all"
+      >
+        <span>{tag.name}</span>
+        <span class="text-xs text-[var(--color-text-muted)]">({tag._count.posts})</span>
+      </a>
+    ))}
+  </div>
+</BaseLayout>

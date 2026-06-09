@@ -1,0 +1,51 @@
+---
+/**
+ * friends.astro — 友链页
+ *
+ * 展示所有已添加的友情链接。
+ */
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import { prisma } from '../lib/prisma';
+
+const friends = await prisma.friend.findMany({
+  orderBy: { sortOrder: 'asc' },
+});
+---
+
+<BaseLayout seo={{ title: '友链', description: '友情链接' }}>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">友链</h1>
+
+  {friends.length === 0 ? (
+    <p class="text-[var(--color-text-muted)]">暂无友链。</p>
+  ) : (
+    <div class="grid gap-4 sm:grid-cols-2">
+      {friends.map(friend => (
+        <a
+          href={friend.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center gap-4 p-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] hover:shadow-md hover:border-[var(--color-accent)] transition-all"
+        >
+          {friend.avatar ? (
+            <img
+              src={friend.avatar}
+              alt={friend.name}
+              class="w-12 h-12 rounded-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <div class="w-12 h-12 rounded-full bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-muted)]">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+            </div>
+          )}
+          <div>
+            <h3 class="font-semibold text-[var(--color-text-primary)]">{friend.name}</h3>
+            {friend.description && (
+              <p class="text-sm text-[var(--color-text-secondary)] line-clamp-2" title={friend.description}>{friend.description}</p>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+</BaseLayout>

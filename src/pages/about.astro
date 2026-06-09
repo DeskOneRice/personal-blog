@@ -1,0 +1,23 @@
+---
+/**
+ * about.astro — 关于页
+ *
+ * 内容从数据库 SiteConfig 表读取（key='aboutContent'），
+ * 支持 Markdown，便于管理员在后台编辑关于内容。
+ */
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import { prisma } from '../lib/prisma';
+import { renderMarkdown } from '../lib/markdown';
+
+const aboutConfig = await prisma.siteConfig.findUnique({
+  where: { key: 'aboutContent' },
+});
+
+const content = aboutConfig?.value || '## 关于我\n\n暂无介绍，请通过管理后台设置。';
+const htmlContent = renderMarkdown(content);
+---
+
+<BaseLayout seo={{ title: '关于', description: '关于我和这个博客' }}>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">关于</h1>
+  <div class="prose" set:html={htmlContent} />
+</BaseLayout>

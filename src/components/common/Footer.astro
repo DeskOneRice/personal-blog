@@ -1,0 +1,16 @@
+---
+/**
+ * Footer.astro — 全站页脚
+ */
+---
+
+<footer class="border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)] mt-16">
+  <div class="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
+    <p>&copy; {new Date().getFullYear()} My Blog. Built with Astro &amp; SQLite.</p>
+    <p class="mt-1">
+      <a href="/rss.xml" class="hover:text-[var(--color-accent)] transition-colors">RSS 订阅</a>
+      <span class="mx-2">·</span>
+      <a href="/admin/login" class="hover:text-[var(--color-accent)] transition-colors">管理</a>
+    </p>
+  </div>
+</footer>

@@ -1,0 +1,21 @@
+---
+/**
+ * Sidebar.astro — 首页侧边栏容器
+ *
+ * 聚合多个小部件：每日一句、公告、分类、标签、签到日历
+ * 每个小部件是独立组件，方便后续增减。
+ */
+import DailyQuote from './DailyQuote.astro';
+import Announcement from './Announcement.astro';
+import CategoryWidget from './CategoryWidget.astro';
+import TagCloudWidget from './TagCloudWidget.astro';
+import CalendarWidget from './CalendarWidget.astro';
+---
+
+<aside class="space-y-6">
+  <DailyQuote />
+  <Announcement />
+  <CategoryWidget />
+  <TagCloudWidget />
+  <CalendarWidget />
+</aside>

@@ -1,0 +1,133 @@
+// Prisma Schema - 个人博客数据模型
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 用户系统 — 多用户角色预留
+// ============================================================
+model User {
+  id        Int       @id @default(autoincrement())
+  username  String    @unique
+  email     String?   @unique
+  password  String                   // bcrypt 哈希
+  role      String    @default("author")  // admin | author | reader
+  avatar    String?
+  bio       String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     Post[]
+}
+
+// ============================================================
+// 邀请码 — 后续开放注册时使用
+// ============================================================
+model InviteCode {
+  id        Int       @id @default(autoincrement())
+  code      String    @unique
+  usedBy    Int?      @unique
+  usedAt    DateTime?
+  createdBy Int
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  expiresAt DateTime?
+}
+
+// ============================================================
+// 文章
+// ============================================================
+model Post {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  content     String                 // Markdown
+  excerpt     String?
+  coverImage  String?
+  published   Boolean   @default(false)
+  authorId    Int?
+  author      User?     @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  categoryId  Int?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags        PostTag[]
+}
+
+// ============================================================
+// 分类
+// ============================================================
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  posts       Post[]
+}
+
+// ============================================================
+// 标签
+// ============================================================
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  posts     PostTag[]
+}
+
+// ============================================================
+// 文章-标签 多对多中间表（无需 id/时间戳，联合主键即唯一标识）
+// ============================================================
+model PostTag {
+  postId Int
+  tagId  Int
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([postId, tagId])
+}
+
+// ============================================================
+// 友链
+// ============================================================
+model Friend {
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String
+  avatar      String?
+  description String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ============================================================
+// 公告
+// ============================================================
+model Announcement {
+  id        Int      @id @default(autoincrement())
+  content   String                    // Markdown
+  published Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ============================================================
+// 站点配置
+// ============================================================
+model SiteConfig {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

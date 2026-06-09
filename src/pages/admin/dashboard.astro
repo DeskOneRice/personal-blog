@@ -1,0 +1,48 @@
+---
+/**
+ * /admin/dashboard — 管理后台概览
+ */
+import AdminLayout from '../../components/layout/AdminLayout.astro';
+import { prisma } from '../../lib/prisma';
+import type { SessionUser } from '../../lib/auth';
+
+const user = Astro.locals.user as SessionUser | undefined;
+
+// 统计数据
+const [postCount, publishedCount, categoryCount, tagCount] = await Promise.all([
+  prisma.post.count(),
+  prisma.post.count({ where: { published: true } }),
+  prisma.category.count(),
+  prisma.tag.count(),
+]);
+---
+
+<AdminLayout title="仪表盘" user={user ?? null}>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
+      <p class="text-sm text-[var(--color-text-muted)]">总文章数</p>
+      <p class="text-2xl font-bold text-[var(--color-text-primary)]">{postCount}</p>
+    </div>
+    <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
+      <p class="text-sm text-[var(--color-text-muted)]">已发布</p>
+      <p class="text-2xl font-bold text-green-500">{publishedCount}</p>
+    </div>
+    <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
+      <p class="text-sm text-[var(--color-text-muted)]">分类数</p>
+      <p class="text-2xl font-bold text-[var(--color-text-primary)]">{categoryCount}</p>
+    </div>
+    <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
+      <p class="text-sm text-[var(--color-text-muted)]">标签数</p>
+      <p class="text-2xl font-bold text-[var(--color-text-primary)]">{tagCount}</p>
+    </div>
+  </div>
+
+  <div class="mt-8 bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
+    <h2 class="text-lg font-semibold text-[var(--color-text-primary)] mb-2">快捷操作</h2>
+    <div class="flex flex-wrap gap-2">
+      <a href="/admin/posts/new" class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white text-sm">+ 写文章</a>
+      <a href="/admin/posts" class="px-4 py-2 rounded-md border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]">管理文章</a>
+      <a href="/" class="px-4 py-2 rounded-md border border-[var(--color-border)] text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-accent)]">查看博客</a>
+    </div>
+  </div>
+</AdminLayout>

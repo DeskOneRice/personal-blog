@@ -1,0 +1,60 @@
+---
+/**
+ * [cat].astro — 按分类筛选文章列表
+ */
+import BaseLayout from '../../components/layout/BaseLayout.astro';
+import PostCard from '../../components/blog/PostCard.astro';
+import Pagination from '../../components/blog/Pagination.astro';
+import { prisma } from '../../lib/prisma';
+import { toInt } from '../../lib/utils';
+
+const { cat } = Astro.params;
+
+// 查分类
+const category = await prisma.category.findUnique({
+  where: { slug: cat },
+});
+
+if (!category) {
+  return Astro.redirect('/');
+}
+
+const postsPerPage = 10;
+const currentPage = toInt(Astro.url.searchParams.get('page'), 1);
+const baseUrl = `/categories/${cat}`;
+
+const totalPosts = await prisma.post.count({
+  where: { published: true, categoryId: category.id },
+});
+
+const totalPages = Math.ceil(totalPosts / postsPerPage);
+
+const posts = await prisma.post.findMany({
+  where: { published: true, categoryId: category.id },
+  include: {
+    category: { select: { name: true, slug: true } },
+    tags: { select: { tag: { select: { name: true, slug: true } } } },
+  },
+  orderBy: { createdAt: 'desc' },
+  skip: (currentPage - 1) * postsPerPage,
+  take: postsPerPage,
+});
+---
+
+<BaseLayout
+  seo={{
+    title: `分类：${category.name}`,
+    description: category.description || `浏览 ${category.name} 分类下的所有文章`,
+  }}
+>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">
+    分类：{category.name}
+    <span class="text-lg font-normal text-[var(--color-text-muted)] ml-2">({totalPosts} 篇)</span>
+  </h1>
+
+  <div class="space-y-6">
+    {posts.map(post => <PostCard post={post} />)}
+  </div>
+
+  <Pagination currentPage={currentPage} totalPages={totalPages} baseUrl={baseUrl} />
+</BaseLayout>

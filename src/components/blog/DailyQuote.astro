@@ -1,0 +1,25 @@
+---
+/**
+ * DailyQuote.astro — 每日一句
+ *
+ * 从 SiteConfig(key='dailyQuotes') 读取名言列表（换行分隔），
+ * 根据一年中的第几天选择一句，同一天所有人看到同一句。
+ */
+import { prisma } from '../../lib/prisma';
+
+const config = await prisma.siteConfig.findUnique({ where: { key: 'dailyQuotes' } });
+const quotes = config?.value
+  ? config.value.split('\n').filter(q => q.trim())
+  : ['千里之行，始于足下。', '学而不思则罔，思而不学则殆。', '代码是写给人看的，顺便能在机器上运行。'];
+
+// 根据今天是今年的第几天选一句（保证同一天不变化）
+const now = new Date();
+const startOfYear = new Date(now.getFullYear(), 0, 0);
+const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+const quote = quotes[dayOfYear % quotes.length];
+---
+
+<div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+  <h3 class="text-sm text-[var(--color-text-secondary)] mb-2 pb-2 border-b border-[var(--color-border)]">💬 每日一句</h3>
+  <p class="text-[var(--color-text-primary)] italic leading-relaxed">「{quote}」</p>
+</div>

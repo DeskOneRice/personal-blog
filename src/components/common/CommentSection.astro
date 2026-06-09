@@ -1,0 +1,49 @@
+---
+/**
+ * CommentSection.astro — Giscus 评论区
+ *
+ * Giscus 是用 GitHub Discussions 做评论系统的开源项目。
+ * 评论数据存在你的 GitHub 仓库的 Discussions 里，不经过第三方。
+ * 需要配置环境变量 GISCUS_REPO 等。
+ *
+ * 如果没有配置，显示一个提示信息而不是空白。
+ */
+const repo = import.meta.env.GISCUS_REPO;
+const repoId = import.meta.env.GISCUS_REPO_ID;
+const category = import.meta.env.GISCUS_CATEGORY || 'Announcements';
+const categoryId = import.meta.env.GISCUS_CATEGORY_ID;
+
+if (!repo || !repoId || !categoryId) {
+  // Giscus 未配置
+  // 返回一个占位提示
+}
+---
+
+<div class="mt-12 pt-8 border-t border-[var(--color-border)]">
+  <h3 class="text-lg font-bold text-[var(--color-text-primary)] mb-4">评论</h3>
+
+  {repo && repoId && categoryId ? (
+    <div class="giscus" />
+    <!-- Giscus 脚本 — 这个 script 只在客户端运行 -->
+    <script src="https://giscus.app/client.js"
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-category={category}
+      data-category-id={categoryId}
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="bottom"
+      data-theme="preferred_color_scheme"
+      data-lang="zh-CN"
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async>
+    </script>
+  ) : (
+    <p class="text-sm text-[var(--color-text-muted)]">
+      评论功能暂未开启。如需启用，请配置 Giscus 环境变量。
+    </p>
+  )}
+</div>

@@ -1,0 +1,62 @@
+---
+/**
+ * SEO.astro — 为每个页面生成 SEO meta 标签
+ *
+ * 为什么需要？
+ * 搜索引擎（百度、Google）和社交媒体（Twitter、微信）通过 <meta> 标签
+ * 了解页面内容，决定搜索结果和分享卡片的展示效果。
+ *
+ * 用法：
+ * <BaseLayout seo={{ title: "文章标题", description: "文章摘要" }}>
+ *   页面内容
+ * </BaseLayout>
+ */
+export interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  canonicalURL?: string;
+  type?: 'website' | 'article';
+  publishedAt?: string;  // ISO date for article:published_time
+}
+
+const {
+  title = 'My Blog',
+  description = '记录学习、技术与生活的个人博客',
+  image = '/images/default-og.png',
+  canonicalURL,
+  type = 'website',
+  publishedAt,
+} = Astro.props;
+
+// 站点 URL，从环境变量读取（生产部署时设为真实域名）
+const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
+const fullImageUrl = image.startsWith('http') ? image : `${siteUrl}${image}`;
+
+const pageTitle = title.includes('My Blog') ? title : `${title} — My Blog`;
+---
+
+<!-- 基础 Meta -->
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL || Astro.url.href} />
+
+<!-- Open Graph (Facebook, 微信, Telegram 等) -->
+<meta property="og:type" content={type} />
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={fullImageUrl} />
+<meta property="og:url" content={canonicalURL || Astro.url.href} />
+<meta property="og:site_name" content="My Blog" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={pageTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={fullImageUrl} />
+
+<!-- 文章专用标签 -->
+{publishedAt && <meta property="article:published_time" content={publishedAt} />}
+
+<!-- RSS 自动发现 -->
+<link rel="alternate" type="application/rss+xml" title="My Blog RSS" href={`${siteUrl}/rss.xml`} />

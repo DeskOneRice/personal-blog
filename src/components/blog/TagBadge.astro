@@ -1,0 +1,23 @@
+---
+/**
+ * TagBadge.astro — 标签徽章
+ *
+ * 用法：<TagBadge name="JavaScript" slug="javascript" />
+ * 渲染为可点击的小圆角标签，链接到 /tags/<slug>
+ */
+export interface Props {
+  name: string;
+  slug: string;
+  size?: 'sm' | 'md';
+}
+
+const { name, slug, size = 'sm' } = Astro.props;
+const sizeClass = size === 'md' ? 'px-3 py-1 text-sm' : 'px-2 py-0.5 text-xs';
+---
+
+<a
+  href={`/tags/${slug}`}
+  class={`${sizeClass} rounded-full bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20 transition-colors inline-block`}
+>
+  {name}
+</a>

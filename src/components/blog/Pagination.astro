@@ -1,0 +1,88 @@
+---
+/**
+ * Pagination.astro — 分页导航
+ *
+ * 用法：<Pagination currentPage={2} totalPages={5} baseUrl="/" />
+ * 渲染：← 上一页  1 2 [3] 4 5  下一页 →
+ */
+export interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseUrl: string;  // 如 "/" 或 "/categories/tech"
+}
+
+const { currentPage, totalPages, baseUrl } = Astro.props;
+
+// 如果只有一页，不显示分页
+if (totalPages <= 1) return null;
+
+// 生成页码数组，带省略号
+function getPageNumbers(): (number | '...')[] {
+  const pages: (number | '...')[] = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    pages.push(1);
+    if (currentPage > 3) pages.push('...');
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (currentPage < totalPages - 2) pages.push('...');
+    pages.push(totalPages);
+  }
+  return pages;
+}
+
+function pageUrl(page: number): string {
+  if (page === 1) return baseUrl;
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  return `${baseUrl}${sep}page=${page}`;
+}
+
+const pageNumbers = getPageNumbers();
+---
+
+<nav class="flex items-center justify-center gap-1 mt-8" aria-label="分页导航">
+  <!-- 上一页 -->
+  {currentPage > 1 ? (
+    <a
+      href={pageUrl(currentPage - 1)}
+      class="px-3 py-2 rounded-md text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
+    >
+      ← 上一页
+    </a>
+  ) : (
+    <span class="px-3 py-2 rounded-md text-sm text-[var(--color-text-muted)] cursor-not-allowed">← 上一页</span>
+  )}
+
+  <!-- 页码 -->
+  {pageNumbers.map((p) =>
+    p === '...' ? (
+      <span class="px-2 py-2 text-sm text-[var(--color-text-muted)]">...</span>
+    ) : (
+      <a
+        href={pageUrl(p)}
+        class={`px-3 py-2 rounded-md text-sm transition-colors ${
+          p === currentPage
+            ? 'bg-[var(--color-accent)] text-white font-medium'
+            : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)]'
+        }`}
+        aria-current={p === currentPage ? 'page' : undefined}
+      >
+        {p}
+      </a>
+    )
+  )}
+
+  <!-- 下一页 -->
+  {currentPage < totalPages ? (
+    <a
+      href={pageUrl(currentPage + 1)}
+      class="px-3 py-2 rounded-md text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-secondary)] transition-colors"
+    >
+      下一页 →
+    </a>
+  ) : (
+    <span class="px-3 py-2 rounded-md text-sm text-[var(--color-text-muted)] cursor-not-allowed">下一页 →</span>
+  )}
+</nav>

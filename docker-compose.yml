@@ -1,0 +1,34 @@
+# Docker Compose — 一键启动博客服务
+#
+# 启动: docker compose up -d
+# 停止: docker compose down
+# 查看日志: docker compose logs -f
+#
+# 数据持久化：
+#   SQLite 数据库文件挂载到 ./data 目录，
+#   备份只需复制这个目录。
+
+services:
+  blog:
+    build: .
+    container_name: personal-blog
+    restart: unless-stopped
+    ports:
+      - "4321:4321"
+    volumes:
+      # 数据库文件持久化（重要！容器重建后数据不丢失）
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/blog.db
+      - SITE_URL=${SITE_URL:-http://localhost:4321}
+      - SESSION_SECRET=${SESSION_SECRET:-change-me-to-a-random-string-at-least-32-chars}
+      # Giscus 评论配置（可选）
+      - GISCUS_REPO=${GISCUS_REPO:-}
+      - GISCUS_REPO_ID=${GISCUS_REPO_ID:-}
+      - GISCUS_CATEGORY=${GISCUS_CATEGORY:-Announcements}
+      - GISCUS_CATEGORY_ID=${GISCUS_CATEGORY_ID:-}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4321/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

@@ -1,0 +1,110 @@
+---
+/**
+ * HeroBanner.astro — 首页顶部动画横幅
+ *
+ * 显示站点名、描述、打字机效果标语，粒子/光晕动画背景。
+ * 纯 CSS 动画 + 少量 JS，无外部依赖。
+ */
+import { prisma } from '../../lib/prisma';
+
+const configs = await prisma.siteConfig.findMany();
+const siteName = configs.find(c => c.key === 'siteName')?.value || 'My Blog';
+const siteDesc = configs.find(c => c.key === 'siteDescription')?.value || '';
+
+const now = new Date();
+const startOfYear = new Date(now.getFullYear(), 0, 0);
+const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+
+const slogans = [
+  '记录日常，分享技术，沉淀思考。',
+  'Stay hungry, stay foolish.',
+  '代码改变世界，文字记录成长。',
+  '学习是一辈子的事。',
+  '每一个优秀的人，都有一段沉默的时光。',
+];
+const slogan = slogans[dayOfYear % slogans.length];
+---
+
+<div class="relative overflow-hidden bg-gradient-to-br from-primary-500 via-primary-600 to-primary-800 dark:from-primary-700 dark:via-primary-800 dark:to-primary-950 min-h-[50vh] flex items-center justify-center">
+  <!-- 装饰光晕 -->
+  <div class="absolute inset-0 opacity-30">
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-white rounded-full mix-blend-overlay animate-pulse" style="animation-duration: 4s;"></div>
+    <div class="absolute -bottom-32 -right-32 w-80 h-80 bg-white rounded-full mix-blend-overlay animate-pulse" style="animation-duration: 6s; animation-delay: 1s;"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white rounded-full mix-blend-overlay animate-pulse" style="animation-duration: 5s; animation-delay: 2s;"></div>
+  </div>
+
+  <!-- 粒子装饰（CSS 模拟） -->
+  <div class="absolute inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-1/4 left-1/4 w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style="animation-duration: 3s;"></div>
+    <div class="absolute top-1/3 right-1/3 w-1 h-1 bg-white/30 rounded-full animate-bounce" style="animation-duration: 4s; animation-delay: 0.5s;"></div>
+    <div class="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style="animation-duration: 3.5s; animation-delay: 1s;"></div>
+    <div class="absolute top-2/3 right-1/4 w-1 h-1 bg-white/30 rounded-full animate-bounce" style="animation-duration: 4.5s; animation-delay: 1.5s;"></div>
+    <div class="absolute top-1/2 left-2/3 w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style="animation-duration: 3s; animation-delay: 0.2s;"></div>
+    <div class="absolute bottom-1/3 right-1/2 w-1 h-1 bg-white/30 rounded-full animate-bounce" style="animation-duration: 5s; animation-delay: 2s;"></div>
+  </div>
+
+  <!-- 内容 -->
+  <div class="relative z-10 py-12 px-6 text-center text-white">
+    <h1 class="text-3xl md:text-4xl font-bold mb-3 tracking-tight">
+      {siteName}
+    </h1>
+    <p class="text-lg text-white/80 mb-4 max-w-lg mx-auto">
+      {siteDesc}
+    </p>
+    <!-- 打字机标语 -->
+    <div class="inline-flex items-center gap-1 text-white/70 text-sm">
+      <span>「</span>
+      <span id="typewriter" class="font-medium">{slogan}</span>
+      <span class="w-0.5 h-4 bg-white/60 inline-block animate-pulse"></span>
+      <span>」</span>
+    </div>
+  </div>
+
+  <!-- 底部渐变装饰线 -->
+  <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
+</div>
+
+<!-- 打字机动画脚本 -->
+<script is:inline>
+  (function() {
+    var el = document.getElementById('typewriter');
+    if (!el) return;
+    var texts = [
+      '记录日常，分享技术，沉淀思考。',
+      'Stay hungry, stay foolish.',
+      '代码改变世界，文字记录成长。',
+      '学习是一辈子的事。',
+      '每一个优秀的人，都有一段沉默的时光。',
+    ];
+    var textIndex = texts.indexOf(el.textContent.trim());
+    if (textIndex < 0) textIndex = 0;
+    var charIndex = el.textContent.length;
+    var isDeleting = false;
+    var timer;
+
+    function tick() {
+      var current = texts[textIndex];
+      if (isDeleting) {
+        el.textContent = current.substring(0, charIndex - 1);
+        charIndex--;
+      } else {
+        el.textContent = current.substring(0, charIndex + 1);
+        charIndex++;
+      }
+
+      if (!isDeleting && charIndex === current.length) {
+        timer = setTimeout(function() { isDeleting = true; tick(); }, 2000);
+        return;
+      }
+      if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        textIndex = (textIndex + 1) % texts.length;
+        timer = setTimeout(tick, 500);
+        return;
+      }
+      timer = setTimeout(tick, isDeleting ? 40 : 80);
+    }
+
+    timer = setTimeout(tick, 3000);
+  })();
+</script>

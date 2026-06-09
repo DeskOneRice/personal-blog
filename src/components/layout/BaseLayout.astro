@@ -1,0 +1,77 @@
+---
+/**
+ * BaseLayout.astro — 所有公开页面的基础布局
+ *
+ * 这是博客最重要的布局组件。每一页都"套"在这个布局里：
+ *
+ *   <BaseLayout seo={{ title: "xxx" }}>
+ *     页面具体内容
+ *   </BaseLayout>
+ *
+ * 它负责：
+ * 1. HTML 骨架 (<html>, <head>, <body>)
+ * 2. SEO meta 标签（通过 SEO 组件）
+ * 3. 全局 CSS/JS 引入
+ * 4. 暗色模式的防闪烁脚本
+ * 5. Header + Footer
+ * 6. <slot /> — 子页面的内容插槽
+ */
+import SEO from '../common/SEO.astro';
+import Header from '../common/Header.astro';
+import Footer from '../common/Footer.astro';
+
+export interface Props {
+  seo?: import('@components/common/SEO.astro').Props;
+  containerClass?: string;
+  hasBanner?: boolean;  // 是否有顶部横幅（影响 header 布局模式）
+}
+
+const { seo = {}, containerClass = '', hasBanner = false } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content="Astro" />
+
+    <!-- SEO -->
+    <SEO {...seo} />
+
+    <!-- 全局样式 -->
+    <link rel="stylesheet" href="/src/styles/global.css" />
+
+    <!--
+      暗色模式防闪烁脚本
+      在 <head> 中以阻塞方式运行，在页面渲染前就设置 .dark class。
+      否则用户刷新页面时会先看到白底，再闪成暗色 — 体验很差。
+    -->
+    <script is:inline>
+      (function() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    {hasBanner ? (
+      <>
+        <slot name="banner" />
+        <div class="fixed top-0 left-0 right-0 z-50">
+          <Header transparent />
+        </div>
+      </>
+    ) : (
+      <Header />
+    )}
+
+    <main class={`flex-1 max-w-6xl mx-auto px-2 py-8 w-full ${containerClass}`}>
+      <slot />
+    </main>
+
+    <Footer />
+  </body>
+</html>

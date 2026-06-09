@@ -1,0 +1,102 @@
+---
+/**
+ * /admin/login — 管理员登录页
+ */
+import AdminLayout from '../../components/layout/AdminLayout.astro';
+
+// 如果已登录，读取 cookie 判断（简单检查）
+const sessionCookie = Astro.cookies.get('session')?.value;
+const { decodeSession } = await import('../../lib/auth');
+const user = decodeSession(sessionCookie);
+
+// 已登录用户重定向到仪表盘
+if (user) {
+  return Astro.redirect('/admin/dashboard');
+}
+---
+
+<AdminLayout title="登录" user={null}>
+  <div class="w-full max-w-sm mx-auto">
+    <div class="bg-[var(--color-bg-primary)] rounded-lg shadow-md border border-[var(--color-border)] p-6">
+      <h2 class="text-xl font-bold text-[var(--color-text-primary)] text-center mb-6">
+        管理员登录
+      </h2>
+
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label for="username" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+            用户名
+          </label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            required
+            autocomplete="username"
+            class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          />
+        </div>
+
+        <div>
+          <label for="password" class="block text-sm font-medium text-[var(--color-text-secondary)] mb-1">
+            密码
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="w-full px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          />
+        </div>
+
+        <div id="error-msg" class="text-sm text-red-500 hidden"></div>
+
+        <button
+          type="submit"
+          class="w-full py-2 rounded-md bg-[var(--color-accent)] text-white font-medium hover:bg-[var(--color-accent-hover)] transition-colors"
+        >
+          登录
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('login-form') as HTMLFormElement;
+    const errorMsg = document.getElementById('error-msg') as HTMLDivElement;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.classList.add('hidden');
+
+      const formData = new FormData(form);
+      const body = {
+        username: formData.get('username'),
+        password: formData.get('password'),
+      };
+
+      try {
+        const resp = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+
+        if (resp.ok && data.success) {
+          // 登录成功 → 跳转到后台首页
+          const redirect = new URLSearchParams(window.location.search).get('redirect');
+          window.location.href = redirect || '/admin/dashboard';
+        } else {
+          errorMsg.textContent = data.error || '登录失败';
+          errorMsg.classList.remove('hidden');
+        }
+      } catch {
+        errorMsg.textContent = '网络错误，请重试';
+        errorMsg.classList.remove('hidden');
+      }
+    });
+  </script>
+</AdminLayout>

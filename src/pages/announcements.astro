@@ -1,0 +1,30 @@
+---
+/**
+ * announcements.astro — 公告列表页
+ */
+import BaseLayout from '../components/layout/BaseLayout.astro';
+import { prisma } from '../lib/prisma';
+import { formatDate } from '../lib/utils';
+
+const announcements = await prisma.announcement.findMany({
+  where: { published: true },
+  orderBy: { createdAt: 'desc' },
+});
+---
+
+<BaseLayout seo={{ title: '公告', description: '网站公告' }}>
+  <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-6">📢 公告</h1>
+
+  {announcements.length === 0 ? (
+    <p class="text-[var(--color-text-muted)]">暂无公告。</p>
+  ) : (
+    <div class="space-y-4">
+      {announcements.map(a => (
+        <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
+          <div class="prose prose-sm text-sm" set:html={a.content} />
+          <p class="text-xs text-[var(--color-text-muted)] mt-3">{formatDate(a.createdAt)}</p>
+        </div>
+      ))}
+    </div>
+  )}
+</BaseLayout>
