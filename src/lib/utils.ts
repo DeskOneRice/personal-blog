@@ -12,12 +12,13 @@ export function formatDate(date: Date | string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: 'Asia/Shanghai',
   });
 }
 
 /**
  * 格式化日期+时间为中文友好的字符串
- * 例: 2026-06-04T10:30:00Z → "2026年6月4日 10:30"
+ * 例: 2026-06-04T10:30:00Z → "2026年6月4日 10:30"（北京时间）
  */
 export function formatDateTime(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
@@ -25,9 +26,11 @@ export function formatDateTime(date: Date | string): string {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
+    timeZone: 'Asia/Shanghai',
   }) + ' ' + d.toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Asia/Shanghai',
   });
 }
 

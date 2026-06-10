@@ -12,16 +12,17 @@ const posts = await prisma.post.findMany({
   select: { createdAt: true },
 });
 
+const bjFmt = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' });
+
 const activityMap = new Map<string, number>();
 for (const post of posts) {
-  const key = post.createdAt.toISOString().slice(0, 10);
+  const key = bjFmt.format(post.createdAt).replace(/\//g, '-'); // 2026/06/10 → 2026-06-10
   activityMap.set(key, (activityMap.get(key) || 0) + 1);
 }
-
 const activityJSON = JSON.stringify(Object.fromEntries(activityMap));
 
 const now = new Date();
-const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+const todayKey = bjFmt.format(now).replace(/\//g, '-');
 ---
 
 <div
