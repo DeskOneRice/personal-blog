@@ -32,8 +32,9 @@ const [columns, publishedPosts] = await Promise.all([
   <div class="space-y-4">
     {columns.map(col => (
       <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
-        <div class="flex items-center justify-between mb-3">
-          <div>
+        <div class="flex items-center justify-between mb-3 cursor-pointer toggle-col-header" data-col-id={col.id}>
+          <div class="flex items-center gap-2">
+            <span class="toggle-icon text-xs text-[var(--color-text-muted)]" data-col-id={col.id}>▶</span>
             <h3 class="font-medium text-[var(--color-text-primary)]">
               {col.name}
               <span class="text-xs font-normal text-[var(--color-text-muted)] ml-2">{formatDate(col.createdAt)}</span>
@@ -47,7 +48,9 @@ const [columns, publishedPosts] = await Promise.all([
           </div>
         </div>
 
-        <!-- 文章列表（支持拖拽排序，最多显示8篇高度，超出滚动） -->
+        <!-- 可折叠内容区 -->
+        <div class="col-body hidden" data-col-id={col.id}>
+        <!-- 文章列表（支持拖拽排序） -->
         <div class="post-list space-y-1 max-h-72 overflow-y-auto" data-column-id={col.id}>
           {col.posts.map(cp => (
             <div class="post-item flex items-center gap-2 px-3 py-1.5 rounded bg-[var(--color-bg-secondary)] text-sm cursor-grab active:cursor-grabbing hover:bg-[var(--color-bg-primary)] transition-colors"
@@ -72,6 +75,7 @@ const [columns, publishedPosts] = await Promise.all([
             ))}
           </select>
         </div>
+        </div>
       </div>
     ))}
   </div>
@@ -91,6 +95,19 @@ const [columns, publishedPosts] = await Promise.all([
   </dialog>
 
   <script>
+    // 折叠/展开
+    document.querySelectorAll('.toggle-col-header').forEach(header => {
+      const colId = (header as HTMLElement).dataset.colId!;
+      const body = document.querySelector(`.col-body[data-col-id="${colId}"]`) as HTMLElement;
+      const icon = header.querySelector('.toggle-icon') as HTMLElement;
+      if (!body) return;
+
+      header.addEventListener('click', () => {
+        const collapsed = body.classList.toggle('hidden');
+        icon.textContent = collapsed ? '▶' : '▼';
+      });
+    });
+
     // 创建
     document.getElementById('add-btn')?.addEventListener('click', async () => {
       const name = (document.getElementById('new-name') as HTMLInputElement).value.trim();
