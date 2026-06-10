@@ -39,13 +39,14 @@ const { textareaId } = Astro.props;
   </div>
 
   <!-- 编辑+预览区 -->
-  <div class="flex flex-col lg:flex-row">
-    <div class="flex-1 min-w-0">
+  <!-- 编辑+预览区：同高、独立滚动 -->
+  <div id="editor-container" class="flex flex-col lg:flex-row" style="height:65vh">
+    <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
       <slot />
     </div>
     <div class="hidden lg:block w-px bg-[var(--color-border)]"></div>
     <div class="flex-1 min-w-0 hidden lg:block">
-      <div class="preview-pane prose prose-sm p-4 min-h-[280px] bg-[var(--color-bg-primary)] text-sm">
+      <div class="preview-pane prose prose-sm p-4 h-full overflow-y-auto bg-[var(--color-bg-primary)] text-sm">
         <p class="text-[var(--color-text-muted)]">预览区域</p>
       </div>
     </div>
