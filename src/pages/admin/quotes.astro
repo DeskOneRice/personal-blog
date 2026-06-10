@@ -1,0 +1,150 @@
+---
+/**
+ * /admin/quotes — 每日一句管理
+ */
+import AdminLayout from '../../components/layout/AdminLayout.astro';
+import { prisma } from '../../lib/prisma';
+import type { SessionUser } from '../../lib/auth';
+
+const user = Astro.locals.user as SessionUser | undefined;
+
+const config = await prisma.siteConfig.findUnique({ where: { key: 'dailyQuotes' } });
+const quotes = config?.value ? config.value.split('\n').filter(q => q.trim()) : [];
+---
+
+<AdminLayout title="每日一句" user={user ?? null}>
+  <div class="max-w-2xl space-y-4">
+    <div class="flex gap-2">
+      <input id="new-quote" type="text" placeholder="添加一句名言..."
+        class="flex-1 px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]" />
+      <button id="add-btn" class="px-4 py-2 rounded-md bg-[var(--color-accent)] text-white text-sm">添加</button>
+    </div>
+
+    <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)]">
+      {quotes.length === 0 ? (
+        <div class="p-6 text-center text-sm text-[var(--color-text-muted)]">暂无名言，请添加。</div>
+      ) : (
+        <div class="divide-y divide-[var(--color-border)]">
+          {quotes.map((q, i) => (
+            <div class="flex items-center gap-3 p-3 hover:bg-[var(--color-bg-secondary)] group cursor-grab active:cursor-grabbing transition-colors"
+              draggable="true" data-index={i}>
+              <span class="drag-handle text-[var(--color-text-muted)] text-xs select-none">⠿</span>
+              <span class="text-xs text-[var(--color-text-muted)] w-6 flex-shrink-0 text-right">{i + 1}.</span>
+              <p class="flex-1 text-sm text-[var(--color-text-primary)]">{q}</p>
+              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button class="text-xs text-[var(--color-accent)] hover:underline edit-btn" data-index={i} data-text={q}>编辑</button>
+                <button class="text-xs text-red-400 hover:text-red-500 delete-btn" data-index={i}>删除</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <div class="text-xs text-[var(--color-text-muted)]">
+      共 {quotes.length} 条，每日轮换。修改后立即生效。
+    </div>
+
+    <div id="status-msg" class="text-sm hidden"></div>
+  </div>
+
+  <div id="quotes-data" class="hidden" data-quotes={JSON.stringify(quotes)}></div>
+
+  <script>
+    const quotesData = document.getElementById('quotes-data')!;
+    const quotes: string[] = JSON.parse(quotesData.dataset.quotes || '[]');
+
+    function save(updated: string[]) {
+      const filtered = updated.map(q => q.trim()).filter(Boolean);
+      return fetch('/api/site-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([{ key: 'dailyQuotes', value: filtered.join('\n') }]),
+      });
+    }
+
+    function msg(text: string, ok: boolean) {
+      const el = document.getElementById('status-msg')!;
+      el.textContent = text;
+      el.className = 'text-sm ' + (ok ? 'text-green-500' : 'text-red-500');
+      el.classList.remove('hidden');
+    }
+
+    document.getElementById('add-btn')?.addEventListener('click', async () => {
+      const input = document.getElementById('new-quote') as HTMLInputElement;
+      const text = input.value.trim();
+      if (!text) return;
+      quotes.push(text);
+      const resp = await save(quotes);
+      if (resp.ok) window.location.reload();
+      else msg('保存失败', false);
+    });
+
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const el = btn as HTMLElement;
+        const idx = parseInt(el.dataset.index!);
+        const newText = prompt('编辑名言', quotes[idx]);
+        if (newText === null || newText.trim() === quotes[idx].trim()) return;
+        quotes[idx] = newText.trim();
+        const resp = await save(quotes);
+        if (resp.ok) window.location.reload();
+        else msg('保存失败', false);
+      });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const idx = parseInt((btn as HTMLElement).dataset.index!);
+        if (!confirm(`删除「${quotes[idx]}」？`)) return;
+        quotes.splice(idx, 1);
+        const resp = await save(quotes);
+        if (resp.ok) window.location.reload();
+        else msg('保存失败', false);
+      });
+    });
+
+    // 拖拽排序
+    const list = document.querySelector('.divide-y')!;
+    let dragSrcEl: HTMLElement | null = null;
+
+    list.addEventListener('dragstart', (e) => {
+      const item = (e.target as HTMLElement).closest('[draggable]') as HTMLElement;
+      if (!item) return;
+      dragSrcEl = item;
+      item.classList.add('opacity-50');
+    });
+
+    list.addEventListener('dragend', (e) => {
+      const item = (e.target as HTMLElement).closest('[draggable]') as HTMLElement;
+      if (item) item.classList.remove('opacity-50');
+      dragSrcEl = null;
+    });
+
+    list.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const target = (e.target as HTMLElement).closest('[draggable]') as HTMLElement;
+      if (!target || target === dragSrcEl) return;
+      const items = Array.from(list.querySelectorAll('[draggable]'));
+      const srcIdx = items.indexOf(dragSrcEl!);
+      const tgtIdx = items.indexOf(target);
+      list.insertBefore(dragSrcEl!, srcIdx < tgtIdx ? target.nextSibling : target);
+      // 更新序号
+      list.querySelectorAll('[draggable]').forEach((el, i) => {
+        (el.querySelector('.w-6') as HTMLElement).textContent = `${i + 1}.`;
+      });
+    });
+
+    list.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      const items = Array.from(list.querySelectorAll('[draggable]'));
+      const reordered = items.map(el => {
+        const idx = parseInt((el as HTMLElement).dataset.index!);
+        return quotes[idx];
+      });
+      const resp = await save(reordered);
+      if (resp.ok) { quotes.length = 0; quotes.push(...reordered); window.location.reload(); }
+      else msg('排序保存失败', false);
+    });
+  </script>
+</AdminLayout>

@@ -35,8 +35,7 @@ const { title = '管理后台', user } = Astro.props;
               管理后台
             </a>
             <p class="text-xs text-[var(--color-text-muted)] mt-1">
-              欢迎，{user.username}
-              <span class="ml-1 px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs">{user.role}</span>
+              欢迎，管理员 <span class="text-[var(--color-accent)]">{user.username}</span>
             </p>
           </div>
           <AdminNav />

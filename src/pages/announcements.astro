@@ -4,7 +4,7 @@
  */
 import BaseLayout from '../components/layout/BaseLayout.astro';
 import { prisma } from '../lib/prisma';
-import { formatDate } from '../lib/utils';
+import { formatDateTime } from '../lib/utils';
 
 const announcements = await prisma.announcement.findMany({
   where: { published: true },
@@ -22,7 +22,7 @@ const announcements = await prisma.announcement.findMany({
       {announcements.map(a => (
         <div class="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] p-4">
           <div class="prose prose-sm text-sm" set:html={a.content} />
-          <p class="text-xs text-[var(--color-text-muted)] mt-3">{formatDate(a.createdAt)}</p>
+          <p class="text-xs text-[var(--color-text-muted)] mt-3">{formatDateTime(a.createdAt)}</p>
         </div>
       ))}
     </div>

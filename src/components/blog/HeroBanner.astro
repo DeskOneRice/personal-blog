@@ -11,17 +11,14 @@ const configs = await prisma.siteConfig.findMany();
 const siteName = configs.find(c => c.key === 'siteName')?.value || 'My Blog';
 const siteDesc = configs.find(c => c.key === 'siteDescription')?.value || '';
 
+// 从数据库读取每日一句文案库，没有则用默认
+const quotesConfig = configs.find(c => c.key === 'dailyQuotes');
+const slogans = quotesConfig?.value
+  ? quotesConfig.value.split('\n').filter(q => q.trim())
+  : ['记录日常，分享技术，沉淀思考。'];
 const now = new Date();
 const startOfYear = new Date(now.getFullYear(), 0, 0);
 const dayOfYear = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-
-const slogans = [
-  '记录日常，分享技术，沉淀思考。',
-  'Stay hungry, stay foolish.',
-  '代码改变世界，文字记录成长。',
-  '学习是一辈子的事。',
-  '每一个优秀的人，都有一段沉默的时光。',
-];
 const slogan = slogans[dayOfYear % slogans.length];
 ---
 
@@ -52,7 +49,7 @@ const slogan = slogans[dayOfYear % slogans.length];
       {siteDesc}
     </p>
     <!-- 打字机标语 -->
-    <div class="inline-flex items-center gap-1 text-white/70 text-sm">
+    <div id="typewriter-wrapper" class="inline-flex items-center gap-1 text-white/70 text-sm" data-slogans={JSON.stringify(slogans)}>
       <span>「</span>
       <span id="typewriter" class="font-medium">{slogan}</span>
       <span class="w-0.5 h-4 bg-white/60 inline-block animate-pulse"></span>
@@ -68,14 +65,10 @@ const slogan = slogans[dayOfYear % slogans.length];
 <script is:inline>
   (function() {
     var el = document.getElementById('typewriter');
-    if (!el) return;
-    var texts = [
-      '记录日常，分享技术，沉淀思考。',
-      'Stay hungry, stay foolish.',
-      '代码改变世界，文字记录成长。',
-      '学习是一辈子的事。',
-      '每一个优秀的人，都有一段沉默的时光。',
-    ];
+    var wrapper = document.getElementById('typewriter-wrapper');
+    if (!el || !wrapper) return;
+    var texts = JSON.parse(wrapper.dataset.slogans || '[]');
+    if (!texts.length) return;
     var currentText = el.textContent.trim();
     var textIndex = texts.indexOf(currentText);
     if (textIndex < 0) { textIndex = 0; currentText = ''; }

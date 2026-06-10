@@ -49,13 +49,13 @@ const todayKey = bjFmt.format(now).replace(/\//g, '-');
   <div class="grid grid-cols-7 gap-1" id="cal-grid"></div>
 
   <!-- 图例 -->
-  <div class="flex items-center justify-end gap-1 mt-3 text-xs text-[var(--color-text-muted)]">
+  <div id="cal-legend" class="flex items-center justify-end gap-1 mt-3 text-xs text-[var(--color-text-muted)]">
     <span>少</span>
-    <div class="w-3 h-3 rounded-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)]"></div>
-    <div class="w-3 h-3 rounded-sm bg-primary-100 dark:bg-primary-900/40"></div>
-    <div class="w-3 h-3 rounded-sm bg-primary-200 dark:bg-primary-800/60"></div>
-    <div class="w-3 h-3 rounded-sm bg-primary-400 dark:bg-primary-600"></div>
-    <div class="w-3 h-3 rounded-sm bg-primary-500 dark:bg-primary-500"></div>
+    <div class="legend-item w-3 h-3 rounded-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)]" title="0 篇"></div>
+    <div class="legend-item w-3 h-3 rounded-sm bg-primary-100 dark:bg-primary-900/40" title="1 篇"></div>
+    <div class="legend-item w-3 h-3 rounded-sm bg-primary-200 dark:bg-primary-800/60" title="2 篇"></div>
+    <div class="legend-item w-3 h-3 rounded-sm bg-primary-400 dark:bg-primary-600" title="3 篇"></div>
+    <div class="legend-item w-3 h-3 rounded-sm bg-primary-500 dark:bg-primary-500" title="4+ 篇"></div>
     <span>多</span>
   </div>
 </div>
@@ -64,8 +64,6 @@ const todayKey = bjFmt.format(now).replace(/\//g, '-');
   const widget = document.getElementById('calendar-widget')!;
   const activity: Record<string, number> = JSON.parse(widget.dataset.activity || '{}');
   const todayStr: string = widget.dataset.today || '';
-
-  const maxCount = Math.max(1, ...Object.values(activity));
 
   const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -85,11 +83,11 @@ const todayKey = bjFmt.format(now).replace(/\//g, '-');
   function getActivity(date: number): number {
     const key = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
     const count = activity[key] || 0;
+    // 固定阈值：0篇=灰，1篇=浅蓝，2篇=中蓝，3篇=深蓝，4+篇=最深蓝
     if (count === 0) return 0;
-    const ratio = count / maxCount;
-    if (ratio <= 0.25) return 1;
-    if (ratio <= 0.5)  return 2;
-    if (ratio <= 0.75) return 3;
+    if (count === 1) return 1;
+    if (count === 2) return 2;
+    if (count === 3) return 3;
     return 4;
   }
 
