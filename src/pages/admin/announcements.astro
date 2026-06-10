@@ -4,7 +4,7 @@
  */
 import AdminLayout from '../../components/layout/AdminLayout.astro';
 import { prisma } from '../../lib/prisma';
-import { formatDate } from '../../lib/utils';
+import { formatDateTime } from '../../lib/utils';
 import type { SessionUser } from '../../lib/auth';
 
 const user = Astro.locals.user as SessionUser | undefined;
@@ -35,8 +35,9 @@ const announcements = await prisma.announcement.findMany({
         <div class="flex items-start justify-between gap-4">
           <div class="flex-1 min-w-0">
             <div class="prose prose-sm text-sm text-[var(--color-text-primary)]" set:html={a.content} />
-            <div class="flex items-center gap-2 mt-2 text-xs text-[var(--color-text-muted)]">
-              <span>{formatDate(a.createdAt)}</span>
+            <div class="flex items-center gap-3 mt-2 text-xs text-[var(--color-text-muted)]">
+              <span>创建时间：{formatDateTime(a.createdAt)}</span>
+              <span>更新时间：{formatDateTime(a.updatedAt)}</span>
               <span class={`px-1.5 py-0.5 rounded-full ${a.published ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'}`}>
                 {a.published ? '已发布' : '草稿'}
               </span>

@@ -4,6 +4,7 @@
  */
 import AdminLayout from '../../components/layout/AdminLayout.astro';
 import { prisma } from '../../lib/prisma';
+import { formatDateTime } from '../../lib/utils';
 import type { SessionUser } from '../../lib/auth';
 
 const user = Astro.locals.user as SessionUser | undefined;
@@ -30,6 +31,7 @@ const categories = await prisma.category.findMany({
       <div class="flex items-center gap-2 p-3 bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)]">
         <div class="flex-1 min-w-0">
           <span class="font-medium text-[var(--color-text-primary)]">{cat.name}</span>
+          <span class="text-xs text-[var(--color-text-muted)] ml-2">{formatDateTime(cat.createdAt)}</span>
           {cat.description && (
             <p class="text-xs text-[var(--color-text-muted)] mt-0.5 line-clamp-2" title={cat.description!}>{cat.description}</p>
           )}

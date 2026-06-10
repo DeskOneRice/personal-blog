@@ -4,7 +4,7 @@
  */
 import AdminLayout from '../../components/layout/AdminLayout.astro';
 import { prisma } from '../../lib/prisma';
-import { formatDate } from '../../lib/utils';
+import { formatDateTime } from '../../lib/utils';
 import type { SessionUser } from '../../lib/auth';
 
 const user = Astro.locals.user as SessionUser | undefined;
@@ -32,14 +32,13 @@ const [columns, publishedPosts] = await Promise.all([
   <div class="space-y-4">
     {columns.map(col => (
       <div class="bg-[var(--color-bg-primary)] rounded-lg border border-[var(--color-border)] p-4">
-        <div class="flex items-center justify-between mb-3 cursor-pointer toggle-col-header" data-col-id={col.id}>
+        <div class="flex items-center justify-between cursor-pointer toggle-col-header" data-col-id={col.id}>
           <div class="flex items-center gap-2">
             <span class="toggle-icon text-xs text-[var(--color-text-muted)]" data-col-id={col.id}>▶</span>
             <h3 class="font-medium text-[var(--color-text-primary)]">
               {col.name}
-              <span class="text-xs font-normal text-[var(--color-text-muted)] ml-2">{formatDate(col.createdAt)}</span>
+              <span class="text-xs font-normal text-[var(--color-text-muted)] ml-2">{formatDateTime(col.createdAt)}</span>
             </h3>
-            {col.description && <p class="text-xs text-[var(--color-text-muted)] mt-0.5">{col.description}</p>}
           </div>
           <div class="flex items-center gap-2">
             <button class="text-sm text-[var(--color-accent)] hover:underline edit-col-btn"
@@ -47,6 +46,7 @@ const [columns, publishedPosts] = await Promise.all([
             <button class="text-sm text-red-500 hover:underline delete-col-btn" data-id={col.id} data-name={col.name}>删除</button>
           </div>
         </div>
+        {col.description && <p class="text-xs text-[var(--color-text-muted)] mt-1 mb-2">{col.description}</p>}
 
         <!-- 可折叠内容区 -->
         <div class="col-body hidden" data-col-id={col.id}>
